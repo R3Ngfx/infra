@@ -1,122 +1,54 @@
-#version 410 core
+#version 330 core
 uniform float time;
 uniform vec2 resolution;
-uniform float fft[8];
-uniform float fftSmoothed[8];
-uniform float fftInc[8];
 out vec4 outputColor;
 
-#define MAX_STEPS 100
-#define MAX_DIST 500.0
-#define MIN_DIST 0.01
-#define pi acos(-1.0)
-#define sat(t) clamp(t, 0.0, 1.0)
+#define pi 3.14159
+#define oz vec2(1,0)
+#define tn 10.0
+#define t vec2(20)
+#define sat(x) clamp(x, 0.0, 1.0)
+#define rot(a) mat2x2(cos(a), -sin(a), sin(a), cos(a))
 
-// 2D rotation
-vec2 rot(vec2 p, float a) {
-	return p*mat2(cos(a), sin(a), -sin(a), cos(a));
+// Random normalized vector
+vec2 randVec(vec2 p) {
+	float r = fract(sin(dot(p, vec2(12.345, 741.85)))*4563.12);
+	r *= 2.0*pi;
+	r +=  time;
+	return vec2(sin(r), cos(r));
 }
 
-// Random number between 0 and 1
-float rand(vec2 p) {
-	return fract(sin(dot(p, vec2(12.543,514.123)))*4732.12);
-}
-
-// Value noise
-float noise(vec2 p) {
-	vec2 f = smoothstep(0.0, 1.0, fract(p));
+// Seamless tiled perlin noise
+float perlin(vec2 p) {
+	vec2 f = fract(p);
+	vec2 s = smoothstep(0.0, 1.0, f);
 	vec2 i = floor(p);
+	// Apply mod() to vertex position to make it tileable
+	float a = dot(randVec(mod(i,t)), f);
+	float b = dot(randVec(mod(i+oz.xy,t)), f-oz.xy);
+	float c = dot(randVec(mod(i+oz.yx,t)), f-oz.yx);
+	float d = dot(randVec(mod(i+oz.xx,t)), f-oz.xx);
 	
-	float a = rand(i);
-	float b = rand(i+vec2(1.0,0.0));
-	float c = rand(i+vec2(0.0,1.0));
-	float d = rand(i+vec2(1.0,1.0));
-	
-	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-	
+	return mix(mix(a, b, s.x), mix(c, d, s.x), s.y);
 }
 
-// Fractal brownian motion
+// Fractal noise
 float fbm(vec2 p) {
 	float a = 0.5;
 	float r = 0.0;
 	for (int i = 0; i < 8; i++) {
-		r += a*noise(p);
+		r += a*perlin(p);
 		a *= 0.5;
 		p *= 2.0;
 	}
 	return r;
 }
 
-// Sky SDF
-float sky(vec3 p) {
-	vec2 puv = p.xz;
-	// Move clouds
-	puv += vec2(-2, 4)*time;
-	// Plane with distortion
-	return (2*fftSmoothed[0]+0.1)*(-p.y+25.0+noise(puv/20.0)*1.5*fbm(puv/7.0));
-}
-
-// Mountains SDF
-float mountains(vec3 p) {
-	// Add slope so it forms a valley
-	float addSlope = -clamp(abs(p.x/20.0), 0.0, 7.0);
-	// Increase intensity of distortion as it moves away from the river
-	float rockDist = clamp(2.0*abs(p.x/3.0), 0.0, 30.0);
-	// Rock formations
-	float rocks = fbm(vec2(0, time/5.0)+p.xz/15.0);
-	// Plane with distortion
-	return p.y-rockDist*rocks+addSlope+10.0;
-}
-
-// River SDF
-float river(vec3 p) {
-
-	// Underwater rocks that disturb the flow of the river
-	// with a modification by pyBlob that adds a pressure hole after each rock
-	float rocks = pow(noise(p.xz/6.0+vec2(0, time/1.5)),4.0)
-				  - pow(noise((p.xz-vec2(0,1.5))/6.0+vec2(0, time/1.5)),4.0);
-	// Surface waves
-	float waves = 0.75*fbm(noise(p.xz/4.0)+p.xz/2.0-vec2(0,time/1.75-pow(p.x/7.0,2.0)))
-				  + 0.75*fbm(noise(p.xz/2.0)+p.xz/2.0-vec2(0, time*1.5));
-	// Plane with distortion
-	return p.y+4.0-rocks+waves;
-}
-
-// Scene
-float Dist(vec3 p) {
-	return min(river(p), min(mountains(p), sky(p)));
-}
-
-// Classic ray marcher that returns both the distance and the number of steps
-vec2 RayMarch(vec3 cameraOrigin, vec3 rayDir) {
-	float minDist = 0.0;
-	int steps = 0;
-	while (steps < MAX_STEPS) {
-		vec3 point = cameraOrigin + rayDir * minDist;
-		float d = Dist(point);
-		minDist += d;
-		if(d < MIN_DIST || minDist > MAX_DIST) {
-			break;
-		}
-		steps++;
-	}
-	return vec2(minDist, steps);
-}
-
 void main(void) {
-	vec2 uv = gl_FragCoord.xy/vec2(resolution.y);
-	uv -= resolution.xy/resolution.y/2.0;
-	// Camera setup
-	vec3 cameraOrigin = vec3(0, noise(vec2(0, time/4.0))-1.5, 0);
-	vec3 ray = normalize(vec3(uv.x, uv.y, 0.4));
-	// Camera sway
-	ray.yz = rot(ray.yz, +mix(-0.5 , 0.5, 0.25*noise(vec2(0, 0.5+time/4.0))+noise(vec2(3.0-time/9.0))));
-	ray.xz = rot(ray.xz, mix(-1.0 , 1.0, noise(vec2(5.0+time/10.0))));
-	// Ray March
-	vec2 rm = RayMarch(cameraOrigin, ray);
-	// Color is based on the number of steps and distance
-	vec4 col = pow(vec4(rm.y/100.0),vec4(3.0))+pow(rm.x/MAX_DIST,2.5);
-	// Gamma correction
-	outputColor = vec4(pow(col, vec4(1.0/2.2)).xyz, 1.0);
+	vec2 uv = gl_FragCoord.xy/resolution.y - resolution.xy/resolution.y/2.0;
+	uv += vec2(0.4, -0.2);
+	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01 *time);
+	float hl = (1.0-length(uv));
+	hl *= hl * hl;
+	outputColor = vec4(pow(0.9+0.5*fbm(t*cuv), 10.0)+hl);
 }
