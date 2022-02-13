@@ -45,18 +45,11 @@ int loadFragment(char* path) {
 	if (fragSource != NULL) {
 		free(fragSource);
 	}
-	FILE* f = fopen(path, "r");
-	if (f == NULL) {
-		printf("Error when reading file %s\n", path);
-		return 0;
+	fragSource = loadString(path);
+	if (fragSource == NULL) {
+		return 1;
 	}
-	fseek (f, 0, SEEK_END);
-	long len = ftell(f);
-	fseek (f, 0, SEEK_SET);
-	fragSource = malloc(len);
-	fread(fragSource, 1, len, f);
-	fclose(f);
-	return 1;
+	return 0;
 }
 
 // Assign shader variables
@@ -128,6 +121,7 @@ int initGL() {
 	glBindVertexArray(vao);
 
 	return 1;
+
 }
 
 // Render graphics

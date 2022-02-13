@@ -39,4 +39,19 @@ double lerp(double a, double b, double x) {
 	return (1-x)*a + x*b;
 }
 
+// Load file contents to string
+char* loadString(char* path) {
+	SDL_RWops* f = SDL_RWFromFile(path, "r");
+	if (f == NULL) {
+		printf("Error when reading file %s\n", path);
+		return NULL;
+	}
+	Sint64 len = SDL_RWseek(f, 0, SEEK_END);
+	SDL_RWseek(f, 0, SEEK_SET);
+	char* ret = malloc(len);
+	SDL_RWread(f, ret, len, 1);
+	SDL_RWclose(f);
+	return ret;
+}
+
 #endif

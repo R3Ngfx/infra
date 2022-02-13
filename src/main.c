@@ -5,8 +5,6 @@
 #include "ui.c"
 #include "gl.c"
 
-#include <fftw3.h>
-
 int main() {
 
 	// Load GL
