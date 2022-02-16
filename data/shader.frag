@@ -1,7 +1,7 @@
 #version 330 core
 uniform float time;
 uniform vec2 resolution;
-out vec4 outputColor;
+layout(location = 0) out vec4 outCol;
 
 #define pi 3.14159
 #define oz vec2(1,0)
@@ -50,5 +50,5 @@ void main(void) {
 	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01 *time);
 	float hl = (1.0-length(uv));
 	hl *= hl * hl;
-	outputColor = vec4(pow(0.9+0.5*fbm(t*cuv), 10.0)+hl);
+	outCol = vec4(pow(0.9+0.5*fbm(t*cuv), 10.0)+hl);
 }
