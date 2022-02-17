@@ -33,6 +33,7 @@ struct nk_context *ctx;
 SDL_GLContext context;
 double currFrameTime = 0, prevFrameTime = 0, deltaTime;
 SDL_Window* window;
+unsigned int saveFrames = 0;
 
 // Linear interpolation
 double lerp(double a, double b, double x) {

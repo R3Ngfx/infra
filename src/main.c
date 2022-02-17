@@ -31,7 +31,21 @@ int main() {
 		SDL_Event event;
 		nk_input_begin(ctx);
 		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) goto exit;
+			switch (event.type) {
+				case SDL_QUIT: {
+					goto exit;
+					break;
+				}
+				case SDL_KEYDOWN: {
+					switch (event.key.keysym.sym) {
+						case SDLK_SPACE: {
+							//saveFrames = 1;
+							break;
+						}
+					}
+					break;
+				}
+			}
 			nk_sdl_handle_event(&event);
 		}
 		nk_input_end(ctx);

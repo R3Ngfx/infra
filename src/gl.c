@@ -3,6 +3,7 @@
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "global.c"
+#include <SDL2/SDL_surface.h>
 
 // Global shader variables
 GLuint vao, vbo;
@@ -59,10 +60,6 @@ int loadFragment(char* path) {
 		return 1;
 	}
 	return 0;
-}
-
-// Assign shader variables
-void setShaderVariables() {
 }
 
 // Initialize GL
@@ -168,6 +165,15 @@ int initGL() {
 
 }
 
+// Save render as image
+void saveRender(char* path) {
+	unsigned char renderPixels[3*renderWidth*renderHeight];
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glReadPixels(0, 0, renderWidth, renderHeight, GL_RGB, GL_UNSIGNED_BYTE, &renderPixels);
+	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
+	SDL_SaveBMP(saveSurf, path);
+}
+
 // Render graphics
 void renderGL(){
 
@@ -187,6 +193,13 @@ void renderGL(){
 	glUniform2f(renderResLoc, renderWidth, renderHeight);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
+	// Save render
+	if (saveFrames > 0) {
+		glFinish();
+		saveRender("out.bmp");
+		saveFrames--;
+	}
+
 	// Viewport
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, viewportWidth, viewportHeight);
@@ -195,7 +208,6 @@ void renderGL(){
 	glBindVertexArray(vao);
 	glBindVertexArray(vbo);
 	glUseProgram(viewportShaderProgram);
-	setShaderVariables();
 	int viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
 	glUniform2f(viewportResLoc, viewportWidth, viewportHeight);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);

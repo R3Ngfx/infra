@@ -42,6 +42,12 @@ void renderUI() {
 		sprintf(s, "Time: %.2f", currFrameTime);
 		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
 
+		nk_layout_row_dynamic(ctx, 10, 1);
+		nk_layout_row_dynamic(ctx, 30, 1);
+		if (nk_button_label(ctx, "Save frame")) {
+			saveFrames = 1;
+		}
+
 	}
 	nk_end(ctx);
 }
