@@ -50,6 +50,16 @@ int main() {
 		}
 		nk_input_end(ctx);
 
+		// Adjust render resoltion
+		if (newRenderWidth != renderWidth || newRenderHeight != renderHeight) {
+			renderWidth = newRenderWidth;
+			renderHeight = newRenderHeight;
+			uninitUI();
+			uninitGL();
+			initGL();
+			initUI();
+		}
+
 		// Render UI
 		renderUI();
 

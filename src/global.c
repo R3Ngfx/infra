@@ -27,13 +27,15 @@
 #define MAX_ELEMENT_MEMORY 128 * 1024
 
 // Global variables
-int renderWidth = 1280, renderHeight = 720;
-int viewportWidth = 1280, viewportHeight = 720;
+unsigned int viewportWidth = 1280, viewportHeight = 720;
+unsigned int renderWidth = 1280, renderHeight = 720;
+int newRenderWidth = 1280, newRenderHeight = 720;
+int frameRate = 60;
 struct nk_context *ctx;
 SDL_GLContext context;
 double currFrameTime = 0, prevFrameTime = 0, deltaTime;
 SDL_Window* window;
-unsigned int saveFrames = 0;
+unsigned int saveFrame = 0;
 
 // Linear interpolation
 double lerp(double a, double b, double x) {

@@ -1,9 +1,10 @@
-// OpenGL functions and handling
+// SDL & OpenGL rendering functions and handling
 // Author: Mateo Vallejo
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "global.c"
 #include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_video.h>
 
 // Global shader variables
 GLuint vao, vbo;
@@ -75,7 +76,7 @@ int initGL() {
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetSwapInterval(1);
 	window = SDL_CreateWindow("Infra", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewportWidth, viewportHeight,
-		SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI);
+		SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
 	context = SDL_GL_CreateContext(window);
 	if (context == NULL) {
 		printf("Error initializing SDL\n");
@@ -126,7 +127,7 @@ int initGL() {
 	glAttachShader(shaderProgram, vertShader);
 	loadFragment("data/shader.frag");
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, &fragSource, NULL);
+	glShaderSource(fragShader, 1, (const GLchar* const*)&fragSource, NULL);
 	glCompileShader(fragShader);
 	if (!checkShader(fragShader)) return 0;
 	glAttachShader(shaderProgram, fragShader);
@@ -177,9 +178,16 @@ void saveRender(char* path) {
 // Render graphics
 void renderGL(){
 
-	SDL_GetWindowSize(window, &viewportWidth, &viewportHeight);
+	SDL_GetWindowSize(window, (int*)&viewportWidth, (int*)&viewportHeight);
 
 	// Render
+	/*
+	if (newRenderWidth != renderWidth || newRenderHeight != renderHeight) {
+		renderWidth = newRenderWidth;
+		renderHeight = newRenderHeight;
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, renderWidth, renderHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	}
+	*/
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glViewport(0, 0, renderWidth, renderHeight);
 	glClearColor(0, 0, 0, 1);
@@ -194,10 +202,10 @@ void renderGL(){
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	// Save render
-	if (saveFrames > 0) {
+	if (saveFrame > 0) {
 		glFinish();
 		saveRender("out.bmp");
-		saveFrames--;
+		saveFrame = 0;
 	}
 
 	// Viewport
@@ -212,7 +220,7 @@ void renderGL(){
 	glUniform2f(viewportResLoc, viewportWidth, viewportHeight);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	
+
 	// UI
 	nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_MEMORY, MAX_ELEMENT_MEMORY);
 

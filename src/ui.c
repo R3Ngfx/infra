@@ -22,8 +22,10 @@ void uninitUI() {
 	nk_sdl_shutdown();
 }
 
+// UI componentes and structure
 void renderUI() {
-	if (nk_begin(ctx, "INFO", nk_rect(viewportWidth-300-gap, gap, 300, 500), NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE)) {
+	if (nk_begin(ctx, "OUTPUT", nk_rect(viewportWidth-300-gap, gap, 300, 500),
+		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
 		char s[512];
 		nk_layout_row_dynamic(ctx, 10, 1);
@@ -31,21 +33,23 @@ void renderUI() {
 		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
 
 		nk_layout_row_dynamic(ctx, 10, 1);
-		sprintf(s, "Render resolution: %ix%i", renderWidth, renderHeight);
-		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
+		nk_label(ctx, "Render resolution:", NK_TEXT_ALIGN_LEFT);
+		nk_layout_row_dynamic(ctx, 30, 2);
+		nk_property_int(ctx, "Width:", 1, &newRenderWidth, 2147483647, 0, 0);
+		nk_property_int(ctx, "Height:", 1, &newRenderHeight, 2147483647, 0, 0);
 
-		nk_layout_row_dynamic(ctx, 10, 1);
-		sprintf(s, "Framerate: %i", (int)(1/(deltaTime)));
-		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
+		nk_layout_row_dynamic(ctx, 10, 2);
+		nk_label(ctx, "Render Framerate:", NK_TEXT_ALIGN_LEFT);
+		nk_layout_row_dynamic(ctx, 30, 1);
+		nk_property_int(ctx, "FPS:", 1, &frameRate, 2147483647, 1, 1);
 
-		nk_layout_row_dynamic(ctx, 10, 1);
+		nk_layout_row_dynamic(ctx, 20, 1);
 		sprintf(s, "Time: %.2f", currFrameTime);
 		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
 
-		nk_layout_row_dynamic(ctx, 10, 1);
 		nk_layout_row_dynamic(ctx, 30, 1);
 		if (nk_button_label(ctx, "Save frame")) {
-			saveFrames = 1;
+			saveFrame = 1;
 		}
 
 	}
