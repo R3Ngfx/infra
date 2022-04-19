@@ -196,16 +196,28 @@ void renderGL(){
 	glBindVertexArray(vbo);
 	glUseProgram(shaderProgram);
 	int timeLoc = glGetUniformLocation(shaderProgram, "time");
-	glUniform1f(timeLoc, currFrameTime);
+	glUniform1f(timeLoc, time);
 	int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 	glUniform2f(renderResLoc, renderWidth, renderHeight);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	// Save render
-	if (saveFrame > 0) {
+	// Save frame
+	if (saveFrame) {
 		glFinish();
-		saveRender("out.bmp");
+		saveRender("out/frame.bmp");
+		printf("Saved Frame\n");
 		saveFrame = 0;
+	}
+
+	// Save render
+	if (saveVideo) {
+		glFinish();
+		char s[512];
+		sprintf(s, "out/frame%04d.bmp", currentVideoFrame);
+		saveRender(s);
+		printf("Saved Video: Frame %04d\n", currentVideoFrame);
+		currentVideoFrame++;
+		if (currentVideoFrame >= maxVideoFrames) saveVideo = 0;
 	}
 
 	// Viewport

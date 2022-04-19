@@ -7,3 +7,6 @@ build:
 
 run:
 	./bin/infra
+
+video:
+	ffmpeg -r 60 -i "out/frame%04d.bmp" -vf vflip "out.mp4"

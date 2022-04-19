@@ -24,34 +24,64 @@ void uninitUI() {
 
 // UI componentes and structure
 void renderUI() {
-	if (nk_begin(ctx, "OUTPUT", nk_rect(viewportWidth-300-gap, gap, 300, 500),
+	if (nk_begin(ctx, "INFRA", nk_rect(viewportWidth-300-gap, gap, 300, 500),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
-		char s[512];
-		nk_layout_row_dynamic(ctx, 10, 1);
-		sprintf(s, "Viewport resolution: %ix%i", viewportWidth, viewportHeight);
-		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
+		if (nk_tree_push(ctx, NK_TREE_TAB, "CONFIG", NK_MAXIMIZED)) {
+			nk_layout_row_dynamic(ctx, 10, 1);
+			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
 
-		nk_layout_row_dynamic(ctx, 10, 1);
-		nk_label(ctx, "Render resolution:", NK_TEXT_ALIGN_LEFT);
-		nk_layout_row_dynamic(ctx, 30, 2);
-		nk_property_int(ctx, "Width:", 1, &newRenderWidth, 2147483647, 0, 0);
-		nk_property_int(ctx, "Height:", 1, &newRenderHeight, 2147483647, 0, 0);
+			nk_layout_row_dynamic(ctx, 10, 1);
+			nk_label(ctx, "Render Resolution:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row_dynamic(ctx, 30, 2);
+			nk_property_int(ctx, "Width:", 1, &newRenderWidth, 2147483647, 0, 0);
+			nk_property_int(ctx, "Height:", 1, &newRenderHeight, 2147483647, 0, 0);
 
-		nk_layout_row_dynamic(ctx, 10, 2);
-		nk_label(ctx, "Render Framerate:", NK_TEXT_ALIGN_LEFT);
-		nk_layout_row_dynamic(ctx, 30, 1);
-		nk_property_int(ctx, "FPS:", 1, &frameRate, 2147483647, 1, 1);
+			nk_layout_row_dynamic(ctx, 10, 2);
+			nk_label(ctx, "Render Framerate:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_int(ctx, "FPS:", 1, &frameRate, 2147483647, 1, 1);
 
-		nk_layout_row_dynamic(ctx, 20, 1);
-		sprintf(s, "Time: %.2f", currFrameTime);
-		nk_label(ctx, s, NK_TEXT_ALIGN_LEFT);
-
-		nk_layout_row_dynamic(ctx, 30, 1);
-		if (nk_button_label(ctx, "Save frame")) {
-			saveFrame = 1;
+			nk_layout_row_dynamic(ctx, 10, 2);
+			nk_label(ctx, "Render Length:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_int(ctx, "Seconds:", 1, &renderVideoLength, 2147483647, 1, 1);
+			nk_tree_pop(ctx);
 		}
 
+		if (nk_tree_push(ctx, NK_TREE_TAB, "TIME", NK_MAXIMIZED)) {
+			nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
+			nk_layout_row_push(ctx, 20);
+			if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
+				playing = !playing;
+			}
+			nk_layout_row_push(ctx, 100);
+			nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", time);
+			nk_layout_row_end(ctx);
+			nk_layout_row_dynamic(ctx, 20, 1);
+			nk_progress(ctx, &currentTimeSelect, 100, NK_MODIFIABLE);
+			nk_tree_pop(ctx);
+		}
+
+		if (nk_tree_push(ctx, NK_TREE_TAB, "EXPORT", NK_MAXIMIZED)) {
+			nk_layout_row_dynamic(ctx, 30, 1);
+			if (nk_button_label(ctx, "Save Frame")) {
+				saveFrame = 1;
+			}
+
+			nk_layout_row_dynamic(ctx, 30, 1);
+			if (nk_button_label(ctx, "Save Video")) {
+				saveVideo = 1;
+				currentVideoFrame = 0;
+				maxVideoFrames = renderVideoLength*frameRate;
+			}
+
+			if (saveVideo) {
+				nk_layout_row_dynamic(ctx, 20, 1);
+				nk_label_colored(ctx, "[RECORDING]", NK_TEXT_CENTERED, (int)currentFrameTime%2 == 0 ? nk_rgb(255,0,0) : nk_rgb(255,255,255));
+			}
+			nk_tree_pop(ctx);
+		}
 	}
 	nk_end(ctx);
 }

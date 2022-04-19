@@ -23,9 +23,26 @@ int main() {
 	while (1) {
 
 		// Frame time
-		prevFrameTime = currFrameTime;
-		currFrameTime = SDL_GetTicks()/1000.0;
-		deltaTime = currFrameTime-prevFrameTime;
+		if (saveVideo) {
+			currentFrameTime = (double)currentVideoFrame/frameRate;
+			time = currentFrameTime;
+			deltaTime = 1.0f/frameRate;
+		} else {
+			prevFrameTime = currentFrameTime;
+			currentFrameTime = SDL_GetTicks()/1000.0;
+			deltaTime = currentFrameTime-prevFrameTime;
+			if (playing) {
+				time += deltaTime;
+			}
+			if (prevTimeSelect != currentTimeSelect) {
+				time = currentTimeSelect/100.0f * renderVideoLength;
+				prevTimeSelect = currentTimeSelect;
+			} else {
+				currentTimeSelect = 100*time/renderVideoLength;
+				currentTimeSelect = currentTimeSelect > 100 ? 100 : currentTimeSelect;
+				prevTimeSelect = currentTimeSelect;
+			}
+		}
 
 		// Handle events
 		SDL_Event event;

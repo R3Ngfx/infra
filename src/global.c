@@ -33,9 +33,13 @@ int newRenderWidth = 1280, newRenderHeight = 720;
 int frameRate = 60;
 struct nk_context *ctx;
 SDL_GLContext context;
-double currFrameTime = 0, prevFrameTime = 0, deltaTime;
+unsigned long currentTimeSelect, prevTimeSelect;
+double currentFrameTime = 0, prevFrameTime = 0, time = 0, deltaTime;
 SDL_Window* window;
-unsigned int saveFrame = 0;
+unsigned int saveFrame = 0, saveVideo = 0;
+unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
+int renderVideoLength = 60;
+int playing = 1;
 
 // Linear interpolation
 double lerp(double a, double b, double x) {
