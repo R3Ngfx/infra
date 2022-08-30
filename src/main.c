@@ -3,7 +3,7 @@
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "ui.c"
-#include "gl.c"
+#include "render.c"
 
 int main() {
 
@@ -58,6 +58,12 @@ int main() {
 						case SDLK_SPACE: {
 							//saveFrames = 1;
 							break;
+						}
+						case SDLK_F5: {
+							uninitUI();
+							uninitGL();
+							initGL();
+							initUI();
 						}
 					}
 					break;

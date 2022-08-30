@@ -27,9 +27,17 @@ void renderUI() {
 	if (nk_begin(ctx, "INFRA", nk_rect(viewportWidth-300-gap, gap, 300, 500),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
-		if (nk_tree_push(ctx, NK_TREE_TAB, "CONFIG", NK_MAXIMIZED)) {
+		if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
+
+			nk_layout_row_dynamic(ctx, 10, 1);
+			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
+
+			nk_tree_pop(ctx);
+		}
+
+		if (nk_tree_push(ctx, NK_TREE_TAB, "CONFIG", NK_MAXIMIZED)) {
 
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_label(ctx, "Render Resolution:", NK_TEXT_ALIGN_LEFT);

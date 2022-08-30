@@ -3,8 +3,7 @@
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "global.c"
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_video.h>
+#include "export.c"
 
 // Global shader variables
 GLuint vao, vbo;
@@ -166,28 +165,12 @@ int initGL() {
 
 }
 
-// Save render as image
-void saveRender(char* path) {
-	unsigned char renderPixels[3*renderWidth*renderHeight];
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glReadPixels(0, 0, renderWidth, renderHeight, GL_RGB, GL_UNSIGNED_BYTE, &renderPixels);
-	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
-	SDL_SaveBMP(saveSurf, path);
-}
-
 // Render graphics
 void renderGL(){
 
 	SDL_GetWindowSize(window, (int*)&viewportWidth, (int*)&viewportHeight);
 
 	// Render
-	/*
-	if (newRenderWidth != renderWidth || newRenderHeight != renderHeight) {
-		renderWidth = newRenderWidth;
-		renderHeight = newRenderHeight;
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, renderWidth, renderHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	}
-	*/
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glViewport(0, 0, renderWidth, renderHeight);
 	glClearColor(0, 0, 0, 1);
@@ -204,20 +187,13 @@ void renderGL(){
 	// Save frame
 	if (saveFrame) {
 		glFinish();
-		saveRender("out/frame.bmp");
-		printf("Saved Frame\n");
-		saveFrame = 0;
+		exportFrame();
 	}
 
 	// Save render
 	if (saveVideo) {
 		glFinish();
-		char s[512];
-		sprintf(s, "out/frame%04d.bmp", currentVideoFrame);
-		saveRender(s);
-		printf("Saved Video: Frame %04d\n", currentVideoFrame);
-		currentVideoFrame++;
-		if (currentVideoFrame >= maxVideoFrames) saveVideo = 0;
+		exportVideo();
 	}
 
 	// Viewport
