@@ -79,9 +79,7 @@ void renderUI() {
 
 			nk_layout_row_dynamic(ctx, 30, 1);
 			if (nk_button_label(ctx, "Save Video")) {
-				saveVideo = 1;
-				currentVideoFrame = 0;
-				maxVideoFrames = renderVideoLength*frameRate;
+				startVideo = 1;
 			}
 
 			if (saveVideo) {

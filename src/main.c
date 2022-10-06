@@ -4,6 +4,8 @@
 
 #include "ui.c"
 #include "render.c"
+#include <SDL2/SDL_keycode.h>
+#include <libavcodec/avcodec.h>
 
 int main() {
 
@@ -27,6 +29,7 @@ int main() {
 			currentFrameTime = (double)currentVideoFrame/frameRate;
 			time = currentFrameTime;
 			deltaTime = 1.0f/frameRate;
+			currentTimeSelect = 100*time/renderVideoLength;
 		} else {
 			prevFrameTime = currentFrameTime;
 			currentFrameTime = SDL_GetTicks()/1000.0;
@@ -44,7 +47,7 @@ int main() {
 			}
 		}
 
-		// Handle events
+		// Handle input events
 		SDL_Event event;
 		nk_input_begin(ctx);
 		while (SDL_PollEvent(&event)) {
@@ -60,10 +63,13 @@ int main() {
 							break;
 						}
 						case SDLK_F5: {
+							setShaders();
+							/*
 							uninitUI();
 							uninitGL();
 							initGL();
 							initUI();
+							*/
 						}
 					}
 					break;
@@ -73,14 +79,29 @@ int main() {
 		}
 		nk_input_end(ctx);
 
+		// Handle program events
+		if (startVideo) {
+			if (!initExport()) {
+				printf("Error initializing libav\n");
+				return 1;
+			}
+			startVideo = 0;
+			saveVideo = 1;
+			currentVideoFrame = 0;
+			maxVideoFrames = renderVideoLength*frameRate;
+		}
+
 		// Adjust render resoltion
 		if (newRenderWidth != renderWidth || newRenderHeight != renderHeight) {
 			renderWidth = newRenderWidth;
 			renderHeight = newRenderHeight;
+			setFBO();
+			/*
 			uninitUI();
 			uninitGL();
 			initGL();
 			initUI();
+			*/
 		}
 
 		// Render UI

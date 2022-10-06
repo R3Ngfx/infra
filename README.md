@@ -1,8 +1,6 @@
 # Infra
 Infra is a tool for creating textures and videos by exporting the output of GLSL fragment shaders.
 
-> **NOTE:** This software is in very early stages of development and is not yet useable.
-
 ## Dependencies
 Included dependencies are located in the `src` directory.  
 External dependencies must be installed separately.

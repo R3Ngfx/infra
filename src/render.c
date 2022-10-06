@@ -5,6 +5,8 @@
 #include "global.c"
 #include "export.c"
 
+int renderResLoc;
+int viewportResLoc;
 // Global shader variables
 GLuint vao, vbo;
 GLuint fbo = 0;
@@ -35,6 +37,7 @@ const char* viewportFragSource = "#version 330 core\n"
 	"out vec4 outCol;\n"
 	"void main(void) {\n"
 		"vec2 uv = gl_FragCoord.xy/resolution.xy;\n"
+		"uv.y = 1-uv.y;\n"
 		"outCol = texture(renderedTexture, uv);\n"
 	"}\0";
 
@@ -62,45 +65,8 @@ int loadFragment(char* path) {
 	return 0;
 }
 
-// Initialize GL
-int initGL() {
-
-	// Initialize SDL
-	SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetSwapInterval(1);
-	window = SDL_CreateWindow("Infra", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewportWidth, viewportHeight,
-		SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
-	context = SDL_GL_CreateContext(window);
-	if (context == NULL) {
-		printf("Error initializing SDL\n");
-		return 0;
-	}
-
-	// Initialize GLEW
-	glViewport(0, 0, viewportWidth, viewportHeight);
-	glewExperimental = 1;
-	if (glewInit() != GLEW_OK) {
-		printf("Error initializing GLEW\n");
-		return 0;
-	}
-
-	// Set up VAO and VBO
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(vao);
-
-	// Set up FBO
+// Set up FBO
+int setFBO() {
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glGenTextures(1, &renderTexture);
@@ -115,7 +81,11 @@ int initGL() {
 		printf("Error while setting up FBO\n");
 		return 0;
 	}
+	return 1;
+}
 
+// Set up render and viewport shaders
+int setShaders() {
 	// Set up render shaders
 	GLuint vertShader, fragShader;
 	shaderProgram = glCreateProgram();
@@ -162,6 +132,57 @@ int initGL() {
 	glDeleteShader(fragShader);
 
 	return 1;
+}
+
+// Initialize GL
+int initGL() {
+
+	// Initialize SDL
+	SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetSwapInterval(1);
+	window = SDL_CreateWindow("Infra", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewportWidth, viewportHeight,
+		SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
+	context = SDL_GL_CreateContext(window);
+	if (context == NULL) {
+		printf("Error initializing SDL\n");
+		return 0;
+	}
+
+	// Initialize GLEW
+	glViewport(0, 0, viewportWidth, viewportHeight);
+	glewExperimental = 1;
+	if (glewInit() != GLEW_OK) {
+		printf("Error initializing GLEW\n");
+		return 0;
+	}
+
+	// Set up VAO and VBO
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(vao);
+
+	// Set up FBO
+	if (!setFBO()) {
+		return 0;
+	}
+
+	// Set up render and viewport shaders
+	if (!setShaders()) {
+		return 0;
+	}
+
+	return 1;
 
 }
 
@@ -180,7 +201,7 @@ void renderGL(){
 	glUseProgram(shaderProgram);
 	int timeLoc = glGetUniformLocation(shaderProgram, "time");
 	glUniform1f(timeLoc, time);
-	int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
+	renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 	glUniform2f(renderResLoc, renderWidth, renderHeight);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -193,7 +214,7 @@ void renderGL(){
 	// Save render
 	if (saveVideo) {
 		glFinish();
-		exportVideo();
+		encodeVideoFrame();
 	}
 
 	// Viewport
@@ -204,7 +225,7 @@ void renderGL(){
 	glBindVertexArray(vao);
 	glBindVertexArray(vbo);
 	glUseProgram(viewportShaderProgram);
-	int viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
+	viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
 	glUniform2f(viewportResLoc, viewportWidth, viewportHeight);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
