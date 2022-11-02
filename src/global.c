@@ -31,7 +31,7 @@ unsigned int viewportWidth = 1280, viewportHeight = 720;
 unsigned int renderWidth = 1280, renderHeight = 720;
 int newRenderWidth = 1280, newRenderHeight = 720;
 int frameRate = 60;
-int bitrate = 2400000;
+int bitrate = 24000000;
 struct nk_context *ctx;
 SDL_GLContext context;
 unsigned long currentTimeSelect, prevTimeSelect;

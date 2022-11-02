@@ -64,12 +64,6 @@ int main() {
 						}
 						case SDLK_F5: {
 							setShaders();
-							/*
-							uninitUI();
-							uninitGL();
-							initGL();
-							initUI();
-							*/
 						}
 					}
 					break;
@@ -96,12 +90,6 @@ int main() {
 			renderWidth = newRenderWidth;
 			renderHeight = newRenderHeight;
 			setFBO();
-			/*
-			uninitUI();
-			uninitGL();
-			initGL();
-			initUI();
-			*/
 		}
 
 		// Render UI

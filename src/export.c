@@ -81,7 +81,7 @@ int initExport() {
 		printf("Error allocating video frame data\n");
 		return 0;
 	}
-	swsContext = sws_getContext(renderWidth, renderHeight, AV_PIX_FMT_RGB24, renderWidth, renderHeight, AV_PIX_FMT_YUV420P, 0, NULL, NULL, NULL);
+	swsContext = sws_getContext(renderWidth, renderHeight, AV_PIX_FMT_RGB24, renderWidth, renderHeight, AV_PIX_FMT_YUV420P, SWS_SPLINE, NULL, NULL, NULL);
 	return 1;
 }
 
@@ -100,7 +100,6 @@ void encode(int final) {
 	if (avcodec_send_frame(codecContext, final ? NULL : frame) < 0) {
 		printf("Error sending a frame for encoding\n");
 	}
-
 	int ret = 0;
 	while (ret >= 0) {
 		ret = avcodec_receive_packet(codecContext, packet);
@@ -113,9 +112,7 @@ void encode(int final) {
 		//printf("Write packet %3"PRId64" (size=%5d)\n", packet->pts, packet->size);
 		fwrite(packet->data, 1, packet->size, videoFile);
 		av_packet_unref(packet);
-
 	}
-
 }
 
 void encodeVideoFrame() {
