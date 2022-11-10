@@ -56,9 +56,10 @@ char* loadString(char* path) {
 	}
 	Sint64 len = SDL_RWseek(f, 0, SEEK_END);
 	SDL_RWseek(f, 0, SEEK_SET);
-	char* ret = malloc(len);
+	char* ret = malloc(len+1);
 	SDL_RWread(f, ret, len, 1);
 	SDL_RWclose(f);
+	ret[len] = (char)0;
 	return ret;
 }
 

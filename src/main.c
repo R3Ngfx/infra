@@ -59,11 +59,25 @@ int main() {
 				case SDL_KEYDOWN: {
 					switch (event.key.keysym.sym) {
 						case SDLK_SPACE: {
-							//saveFrames = 1;
+							playing = !playing;
+							break;
+						}
+						case SDLK_LEFT: {
+							if (!saveVideo) {
+								time -= 1.0/frameRate;
+								if (time < 0) time = 0;
+							}
+							break;
+						}
+						case SDLK_RIGHT: {
+							if (!saveVideo) {
+								time += 1.0/frameRate;
+							}
 							break;
 						}
 						case SDLK_F5: {
 							setShaders();
+							break;
 						}
 					}
 					break;

@@ -24,9 +24,10 @@ void uninitUI() {
 
 // UI componentes and structure
 void renderUI() {
-	if (nk_begin(ctx, "INFRA", nk_rect(viewportWidth-300-gap, gap, 300, 500),
+	if (nk_begin(ctx, "RENDER", nk_rect(viewportWidth-300-gap, gap, 300, 500),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
+		/*
 		if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
@@ -36,6 +37,7 @@ void renderUI() {
 
 			nk_tree_pop(ctx);
 		}
+		*/
 
 		if (nk_tree_push(ctx, NK_TREE_TAB, "CONFIG", NK_MAXIMIZED)) {
 
@@ -84,7 +86,7 @@ void renderUI() {
 
 			if (saveVideo) {
 				nk_layout_row_dynamic(ctx, 20, 1);
-				nk_label_colored(ctx, "[RECORDING]", NK_TEXT_CENTERED, (int)currentFrameTime%2 == 0 ? nk_rgb(255,0,0) : nk_rgb(255,255,255));
+				nk_label_colored(ctx, "[RECORDING]", NK_TEXT_CENTERED, nk_rgb(255,0,0));
 			}
 			nk_tree_pop(ctx);
 		}

@@ -9,8 +9,8 @@ int renderResLoc;
 int viewportResLoc;
 // Global shader variables
 GLuint vao, vbo;
-GLuint fbo = 0;
-GLuint shaderProgram = 0, viewportShaderProgram;
+GLuint fbo;
+GLuint shaderProgram, viewportShaderProgram;
 GLuint renderTexture;
 GLint success = GL_FALSE;
 
@@ -96,7 +96,7 @@ int setShaders() {
 	glAttachShader(shaderProgram, vertShader);
 	loadFragment("data/shader.frag");
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, (const GLchar* const*)&fragSource, NULL);
+	glShaderSource(fragShader, 1, &fragSource, NULL);
 	glCompileShader(fragShader);
 	if (!checkShader(fragShader)) return 0;
 	glAttachShader(shaderProgram, fragShader);
