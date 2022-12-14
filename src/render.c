@@ -131,6 +131,8 @@ int setShaders() {
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
 
+	lastRenderedTime = -1;
+
 	return 1;
 }
 
@@ -192,18 +194,21 @@ void renderGL(){
 	SDL_GetWindowSize(window, (int*)&viewportWidth, (int*)&viewportHeight);
 
 	// Render
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glViewport(0, 0, renderWidth, renderHeight);
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glBindVertexArray(vao);
-	glBindVertexArray(vbo);
-	glUseProgram(shaderProgram);
-	int timeLoc = glGetUniformLocation(shaderProgram, "time");
-	glUniform1f(timeLoc, time);
-	renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
-	glUniform2f(renderResLoc, renderWidth, renderHeight);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	if (lastRenderedTime != currentTime || saveFrame || saveVideo) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glViewport(0, 0, renderWidth, renderHeight);
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glBindVertexArray(vao);
+		glBindVertexArray(vbo);
+		glUseProgram(shaderProgram);
+		int timeLoc = glGetUniformLocation(shaderProgram, "time");
+		glUniform1f(timeLoc, currentTime);
+		renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
+		glUniform2f(renderResLoc, renderWidth, renderHeight);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		lastRenderedTime = currentTime;
+	}
 
 	// Save frame
 	if (saveFrame) {

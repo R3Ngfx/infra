@@ -4,6 +4,8 @@
 
 #include "ui.c"
 #include "render.c"
+#include "audio.c"
+#include <SDL2/SDL_audio.h>
 #include <SDL2/SDL_keycode.h>
 #include <libavcodec/avcodec.h>
 
@@ -27,21 +29,21 @@ int main() {
 		// Frame time
 		if (saveVideo) {
 			currentFrameTime = (double)currentVideoFrame/frameRate;
-			time = currentFrameTime;
+			currentTime = currentFrameTime;
 			deltaTime = 1.0f/frameRate;
-			currentTimeSelect = 100*time/renderVideoLength;
+			currentTimeSelect = 100*currentTime/renderVideoLength;
 		} else {
 			prevFrameTime = currentFrameTime;
 			currentFrameTime = SDL_GetTicks()/1000.0;
 			deltaTime = currentFrameTime-prevFrameTime;
 			if (playing) {
-				time += deltaTime;
+				currentTime += deltaTime;
 			}
 			if (prevTimeSelect != currentTimeSelect) {
-				time = currentTimeSelect/100.0f * renderVideoLength;
+				currentTime = currentTimeSelect/100.0f * renderVideoLength;
 				prevTimeSelect = currentTimeSelect;
 			} else {
-				currentTimeSelect = 100*time/renderVideoLength;
+				currentTimeSelect = 100*currentTime/renderVideoLength;
 				currentTimeSelect = currentTimeSelect > 100 ? 100 : currentTimeSelect;
 				prevTimeSelect = currentTimeSelect;
 			}
@@ -64,14 +66,14 @@ int main() {
 						}
 						case SDLK_LEFT: {
 							if (!saveVideo) {
-								time -= 1.0/frameRate;
-								if (time < 0) time = 0;
+								currentTime -= 1.0/frameRate;
+								if (currentTime < 0) currentTime = 0;
 							}
 							break;
 						}
 						case SDLK_RIGHT: {
 							if (!saveVideo) {
-								time += 1.0/frameRate;
+								currentTime += 1.0/frameRate;
 							}
 							break;
 						}
@@ -104,6 +106,7 @@ int main() {
 			renderWidth = newRenderWidth;
 			renderHeight = newRenderHeight;
 			setFBO();
+			lastRenderedTime = -1;
 		}
 
 		// Render UI

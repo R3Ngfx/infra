@@ -8,16 +8,14 @@
 
 // Nuklear initialization
 int initUI(){
-	// Initialize nuklear
 	ctx = nk_sdl_init(window);
 	struct nk_font_atlas *atlas;
 	nk_sdl_font_stash_begin(&atlas);
 	nk_sdl_font_stash_end();
 	return 1;
-
 }
 
-// Uninitialize UI
+// Nuklear uninitialization
 void uninitUI() {
 	nk_sdl_shutdown();
 }
@@ -55,7 +53,7 @@ void renderUI() {
 			nk_layout_row_dynamic(ctx, 10, 2);
 			nk_label(ctx, "Render Length:", NK_TEXT_ALIGN_LEFT);
 			nk_layout_row_dynamic(ctx, 30, 1);
-			nk_property_int(ctx, "Seconds:", 1, &renderVideoLength, 2147483647, 1, 1);
+			nk_property_float(ctx, "Seconds:", 0, &renderVideoLength, 3600, 1, 0.1);
 			nk_tree_pop(ctx);
 		}
 
@@ -66,7 +64,7 @@ void renderUI() {
 				playing = !playing;
 			}
 			nk_layout_row_push(ctx, 100);
-			nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", time);
+			nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
 			nk_layout_row_end(ctx);
 			nk_layout_row_dynamic(ctx, 20, 1);
 			nk_progress(ctx, &currentTimeSelect, 100, NK_MODIFIABLE);
@@ -92,4 +90,17 @@ void renderUI() {
 		}
 	}
 	nk_end(ctx);
+
+	/*
+	if (nk_begin(ctx, "TIMELINE", nk_rect(gap, viewportHeight-gap-200, viewportWidth-2*gap, 200),
+		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
+		//nk_plot(ctx, NK_CHART_LINES, audioCopyBuffer, audioLen, 0);
+		nk_layout_row_dynamic(ctx, 100, 1);
+		nk_chart_begin(ctx, NK_CHART_COLUMN, renderVideoLength, -1, 1);
+		for (int i = 0; i < 1000; i++)
+			nk_chart_push(ctx, sin(i*0.1));
+		nk_chart_end(ctx);
+	}
+	nk_end(ctx);
+	*/
 }

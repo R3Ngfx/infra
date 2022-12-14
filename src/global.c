@@ -35,12 +35,15 @@ int bitrate = 24000000;
 struct nk_context *ctx;
 SDL_GLContext context;
 unsigned long currentTimeSelect, prevTimeSelect;
-double currentFrameTime = 0, prevFrameTime = 0, time = 0, deltaTime;
+double currentFrameTime = 0, prevFrameTime = 0, currentTime = 0, deltaTime;
 SDL_Window* window;
 unsigned int saveFrame = 0, startVideo = 0, saveVideo = 0;
 unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
-int renderVideoLength = 60;
-int playing = 1;
+float renderVideoLength = 60;
+int playing = 0;
+double lastRenderedTime = -1;
+unsigned int audioLen = 0;
+unsigned char* audioBuffer;
 
 // Linear interpolation
 double lerp(double a, double b, double x) {
