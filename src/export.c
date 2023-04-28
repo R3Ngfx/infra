@@ -52,7 +52,7 @@ int initExport() {
 		printf("Error allocating package\n");
 		return 0;
 	}
-	codecContext->bit_rate = bitrate;
+	codecContext->bit_rate = 1000*bitrate;
 	codecContext->width = renderWidth;
 	codecContext->height = renderHeight;
 	codecContext->time_base = (AVRational){1, frameRate};
@@ -92,6 +92,8 @@ void exportFrame() {
 	//flipRender(renderPixels);
 	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
 	SDL_SaveBMP(saveSurf, "out/frame.bmp");
+	free(renderPixels);
+	SDL_FreeSurface(saveSurf);
 	printf("Saved Frame\n");
 	saveFrame = 0;
 }
@@ -139,4 +141,5 @@ void encodeVideoFrame() {
 		saveVideo = 0;
 		printf("Saved Video\n");
 	}
+	free(renderPixels);
 }

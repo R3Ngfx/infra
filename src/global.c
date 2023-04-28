@@ -29,9 +29,9 @@
 // Global variables
 unsigned int viewportWidth = 1280, viewportHeight = 720;
 unsigned int renderWidth = 1280, renderHeight = 720;
-int newRenderWidth = 1280, newRenderHeight = 720;
-int frameRate = 60;
-int bitrate = 24000000;
+unsigned int newRenderWidth = 1280, newRenderHeight = 720;
+unsigned int frameRate = 60;
+unsigned int bitrate = 24000;
 struct nk_context *ctx;
 SDL_GLContext context;
 unsigned long currentTimeSelect, prevTimeSelect;
@@ -40,10 +40,14 @@ SDL_Window* window;
 unsigned int saveFrame = 0, startVideo = 0, saveVideo = 0;
 unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
 float renderVideoLength = 60;
-int playing = 0;
+char playing = 0;
+char reloadShaders = 0;
+char hideUI = 0;
 double lastRenderedTime = -1;
 unsigned int audioLen = 0;
-unsigned char* audioBuffer;
+unsigned char* lows, mids, highs;
+char shaderPath[256] = "data/shader.frag";
+int shaderPathLen = 16;
 
 // Linear interpolation
 double lerp(double a, double b, double x) {

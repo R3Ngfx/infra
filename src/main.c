@@ -78,7 +78,15 @@ int main() {
 							break;
 						}
 						case SDLK_F5: {
-							setShaders();
+							reloadShaders = 1;
+							break;
+						}
+						case SDLK_F11: {
+							hideUI = !hideUI;
+							break;
+						}
+						case SDLK_F12: {
+							saveFrame = 1;
 							break;
 						}
 					}
@@ -99,6 +107,10 @@ int main() {
 			saveVideo = 1;
 			currentVideoFrame = 0;
 			maxVideoFrames = renderVideoLength*frameRate;
+		}
+		if (reloadShaders) {
+			setShaders();
+			reloadShaders = 0;
 		}
 
 		// Adjust render resoltion

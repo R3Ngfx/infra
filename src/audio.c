@@ -12,5 +12,6 @@ unsigned char* trackBuffer;
 
 void loadTrack(char* path) {
 	SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength);
+	// FFT for every frame and fill lows, mids and highs
 	SDL_FreeWAV(trackBuffer);
 }

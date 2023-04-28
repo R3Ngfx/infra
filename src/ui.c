@@ -22,10 +22,12 @@ void uninitUI() {
 
 // UI componentes and structure
 void renderUI() {
-	if (nk_begin(ctx, "RENDER", nk_rect(viewportWidth-300-gap, gap, 300, 500),
+
+	if (hideUI) return;
+
+	if (nk_begin(ctx, "RENDER", nk_rect(viewportWidth-300-gap, gap, 300, 400),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
-		/*
 		if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
@@ -33,6 +35,33 @@ void renderUI() {
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
 
+			nk_tree_pop(ctx);
+		}
+
+		if (nk_tree_push(ctx, NK_TREE_TAB, "VIDEO", NK_MAXIMIZED)) {
+			float ratio[] = {0.8, 0.2f};
+			nk_label(ctx, "Shader Path:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+			nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, shaderPath, &shaderPathLen, 256, nk_filter_default); 
+			if (nk_button_label(ctx, "Load")) {
+				// Load shader
+				shaderPath[shaderPathLen] = '\0';
+				reloadShaders = 1;
+			}
+			nk_tree_pop(ctx);
+		}
+
+		/*
+		if (nk_tree_push(ctx, NK_TREE_TAB, "AUDIO", NK_MAXIMIZED)) {
+			float ratio[] = {0.8, 0.2f};
+			nk_label(ctx, "Audio Path:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+			nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, shaderPath, &shaderPathLen, 256, nk_filter_default); 
+			if (nk_button_label(ctx, "Load")) {
+				// Load shader
+				shaderPath[shaderPathLen] = '\0';
+				reloadShaders = 1;
+			}
 			nk_tree_pop(ctx);
 		}
 		*/
@@ -46,6 +75,11 @@ void renderUI() {
 			nk_property_int(ctx, "Height:", 1, &newRenderHeight, 2147483647, 0, 0);
 
 			nk_layout_row_dynamic(ctx, 10, 2);
+			nk_label(ctx, "Render Bitrate:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_int(ctx, "Bitrate(kb/s):", 1, &bitrate, 2147483647, 1, 1);
+
+			nk_layout_row_dynamic(ctx, 10, 2);
 			nk_label(ctx, "Render Framerate:", NK_TEXT_ALIGN_LEFT);
 			nk_layout_row_dynamic(ctx, 30, 1);
 			nk_property_int(ctx, "FPS:", 1, &frameRate, 2147483647, 1, 1);
@@ -56,51 +90,26 @@ void renderUI() {
 			nk_property_float(ctx, "Seconds:", 0, &renderVideoLength, 3600, 1, 0.1);
 			nk_tree_pop(ctx);
 		}
-
-		if (nk_tree_push(ctx, NK_TREE_TAB, "TIME", NK_MAXIMIZED)) {
-			nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
-			nk_layout_row_push(ctx, 20);
-			if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
-				playing = !playing;
-			}
-			nk_layout_row_push(ctx, 100);
-			nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
-			nk_layout_row_end(ctx);
-			nk_layout_row_dynamic(ctx, 20, 1);
-			nk_progress(ctx, &currentTimeSelect, 100, NK_MODIFIABLE);
-			nk_tree_pop(ctx);
-		}
-
-		if (nk_tree_push(ctx, NK_TREE_TAB, "EXPORT", NK_MAXIMIZED)) {
-			nk_layout_row_dynamic(ctx, 30, 1);
-			if (nk_button_label(ctx, "Save Frame")) {
-				saveFrame = 1;
-			}
-
-			nk_layout_row_dynamic(ctx, 30, 1);
-			if (nk_button_label(ctx, "Save Video")) {
-				startVideo = 1;
-			}
-
-			if (saveVideo) {
-				nk_layout_row_dynamic(ctx, 20, 1);
-				nk_label_colored(ctx, "[RECORDING]", NK_TEXT_CENTERED, nk_rgb(255,0,0));
-			}
-			nk_tree_pop(ctx);
-		}
 	}
 	nk_end(ctx);
 
-	/*
-	if (nk_begin(ctx, "TIMELINE", nk_rect(gap, viewportHeight-gap-200, viewportWidth-2*gap, 200),
-		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
-		//nk_plot(ctx, NK_CHART_LINES, audioCopyBuffer, audioLen, 0);
-		nk_layout_row_dynamic(ctx, 100, 1);
-		nk_chart_begin(ctx, NK_CHART_COLUMN, renderVideoLength, -1, 1);
-		for (int i = 0; i < 1000; i++)
-			nk_chart_push(ctx, sin(i*0.1));
-		nk_chart_end(ctx);
+	if (nk_begin(ctx, "TIMELINE", nk_rect(gap, viewportHeight-gap-65, viewportWidth-2*gap, 65),
+		NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR)) {
+		float ratio[] = {0.8, 0.1, 0.1};
+		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratio);
+		nk_label(ctx, "TIMELINE", NK_TEXT_ALIGN_LEFT);
+		if (nk_button_label(ctx, "Save Frame")) saveFrame = 1;
+		if (nk_button_label(ctx, "Save Video")) startVideo = 1;
+		nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
+		nk_layout_row_push(ctx, 20);
+		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
+			playing = !playing;
+		}
+		nk_layout_row_push(ctx, 30);
+		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
+		nk_layout_row_push(ctx, viewportWidth-2*gap-50-20);
+		nk_progress(ctx, &currentTimeSelect, 100, NK_MODIFIABLE);
+		nk_layout_row_end(ctx);
 	}
 	nk_end(ctx);
-	*/
 }

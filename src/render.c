@@ -54,11 +54,11 @@ int checkShader(GLuint shader){
 }
 
 // Loads fragment shader source from file
-int loadFragment(char* path) {
+int loadFragment() {
 	if (fragSource != NULL) {
 		free(fragSource);
 	}
-	fragSource = loadString(path);
+	fragSource = loadString(shaderPath);
 	if (fragSource == NULL) {
 		return 1;
 	}
@@ -94,7 +94,7 @@ int setShaders() {
 	glCompileShader(vertShader);
 	if (!checkShader(vertShader)) return 0;
 	glAttachShader(shaderProgram, vertShader);
-	loadFragment("data/shader.frag");
+	loadFragment();
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragShader, 1, &fragSource, NULL);
 	glCompileShader(fragShader);
