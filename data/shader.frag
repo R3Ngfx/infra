@@ -1,5 +1,8 @@
 #version 330 core
 uniform float time;
+uniform float lows;
+uniform float mids;
+uniform float highs;
 uniform vec2 resolution;
 layout(location = 0) out vec4 outCol;
 

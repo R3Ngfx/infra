@@ -7,6 +7,7 @@
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 #include <libavutil/frame.h>
 #include <libavutil/opt.h>
 #include <libavutil/imgutils.h>
@@ -22,21 +23,10 @@ struct AVPacket* packet;
 const u_int8_t endcode[] = {0,0,1,0xb7};
 FILE* videoFile;
 struct SwsContext* swsContext = NULL;
-
-// Flip render in the y axis to account for OpenGL coordinates
-void flipRender(unsigned char* image) {
-	for (int c = 0; c < 3; c++) {
-		for (int x = 0; x < renderWidth; x++) {
-			for (int y = 0; y < renderHeight/2; y++) {
-				unsigned char temp = image[3*x + 3*y*renderWidth + c];
-				image[3*x + 3*y*renderWidth + c] = image[3*x + 3*(renderHeight-y)*renderWidth + c];
-				image[3*x + 3*(renderHeight-y)*renderWidth + c] = temp;
-			}
-		}
-	}
-}
+unsigned char* renderPixels;
 
 int initExport() {
+	// Initialize encoder
 	codec = avcodec_find_encoder(AV_CODEC_ID_MPEG2VIDEO);
 	if (!codec) {
 		printf("Codec mpeg2video not found\n");
@@ -47,21 +37,21 @@ int initExport() {
 		printf("Error allocatinc codec context\n");
 		return 0;
 	}
-	packet = av_packet_alloc();
-	if (!packet) {
-		printf("Error allocating package\n");
-		return 0;
-	}
 	codecContext->bit_rate = 1000*bitrate;
 	codecContext->width = renderWidth;
 	codecContext->height = renderHeight;
 	codecContext->time_base = (AVRational){1, frameRate};
 	codecContext->framerate = (AVRational){frameRate, 1};
-	codecContext->gop_size = 10;
+	codecContext->gop_size = 15;
 	codecContext->max_b_frames = 1;
-	codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+	codecContext->pix_fmt = AV_PIX_FMT_YUV422P;
 	if (avcodec_open2(codecContext, codec, NULL) < 0) {
 		printf("Error opening codec\n");
+		return 0;
+	}
+	packet = av_packet_alloc();
+	if (!packet) {
+		printf("Error allocating package\n");
 		return 0;
 	}
 	videoFile = fopen("out/video.mp4", "wb");
@@ -81,18 +71,20 @@ int initExport() {
 		printf("Error allocating video frame data\n");
 		return 0;
 	}
-	swsContext = sws_getContext(renderWidth, renderHeight, AV_PIX_FMT_RGB24, renderWidth, renderHeight, AV_PIX_FMT_YUV420P, SWS_SPLINE, NULL, NULL, NULL);
+	swsContext = sws_getContext(renderWidth, renderHeight, AV_PIX_FMT_RGB24, renderWidth, renderHeight, AV_PIX_FMT_YUV422P, SWS_SPLINE, NULL, NULL, NULL);
+	renderPixels = malloc(3*renderWidth*renderHeight);
 	return 1;
 }
 
+void uninitExport() {
+	if(renderPixels != NULL) free(renderPixels);
+}
+
 void exportFrame() {
-	unsigned char* renderPixels = malloc(3*renderWidth*renderHeight);
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glReadPixels(0, 0, renderWidth, renderHeight, GL_BGR, GL_UNSIGNED_BYTE, renderPixels);
-	//flipRender(renderPixels);
 	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
 	SDL_SaveBMP(saveSurf, "out/frame.bmp");
-	free(renderPixels);
 	SDL_FreeSurface(saveSurf);
 	printf("Saved Frame\n");
 	saveFrame = 0;
@@ -111,7 +103,6 @@ void encode(int final) {
 			printf("Error during encoding\n");
 			return;
 		}
-		//printf("Write packet %3"PRId64" (size=%5d)\n", packet->pts, packet->size);
 		fwrite(packet->data, 1, packet->size, videoFile);
 		av_packet_unref(packet);
 	}
@@ -122,11 +113,9 @@ void encodeVideoFrame() {
 		printf("Frame data is not writeable\n");
 		return;
 	}
-	unsigned char* renderPixels = malloc(3*renderWidth*renderHeight);
 	int rgbStride[1] = { 3*renderWidth };
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glReadPixels(0, 0, renderWidth, renderHeight, GL_RGB, GL_UNSIGNED_BYTE, renderPixels);
-	//flipRender(renderPixels);
 	sws_scale(swsContext, &renderPixels, rgbStride, 0, renderHeight, frame->data, frame->linesize);
 	frame->pts = currentVideoFrame;
 	encode(0);
@@ -139,7 +128,7 @@ void encodeVideoFrame() {
 		av_frame_free(&frame);
 		av_packet_free(&packet);
 		saveVideo = 0;
+		SDL_GL_SetSwapInterval(1);
 		printf("Saved Video\n");
 	}
-	free(renderPixels);
 }

@@ -5,8 +5,6 @@
 #include "global.c"
 #include "export.c"
 
-int renderResLoc;
-int viewportResLoc;
 // Global shader variables
 GLuint vao, vbo;
 GLuint fbo;
@@ -51,6 +49,22 @@ int checkShader(GLuint shader){
 		return 0;
 	}
 	return 1;
+}
+
+// Load file contents to string
+char* loadString(char* path) {
+	SDL_RWops* f = SDL_RWFromFile(path, "r");
+	if (f == NULL) {
+		printf("Error when reading file %s\n", path);
+		return NULL;
+	}
+	Sint64 len = SDL_RWseek(f, 0, SEEK_END);
+	SDL_RWseek(f, 0, SEEK_SET);
+	char* ret = malloc(len+1);
+	SDL_RWread(f, ret, len, 1);
+	SDL_RWclose(f);
+	ret[len] = (char)0;
+	return ret;
 }
 
 // Loads fragment shader source from file
@@ -184,6 +198,9 @@ int initGL() {
 		return 0;
 	}
 
+	// Remove framerate cap for faster rendering
+	SDL_GL_SetSwapInterval(1);
+
 	return 1;
 
 }
@@ -204,7 +221,13 @@ void renderGL(){
 		glUseProgram(shaderProgram);
 		int timeLoc = glGetUniformLocation(shaderProgram, "time");
 		glUniform1f(timeLoc, currentTime);
-		renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
+		int lowsLoc = glGetUniformLocation(shaderProgram, "lows");
+		glUniform1f(lowsLoc, lows);
+		int midsLoc = glGetUniformLocation(shaderProgram, "mids");
+		glUniform1f(midsLoc, mids);
+		int highsLoc = glGetUniformLocation(shaderProgram, "highs");
+		glUniform1f(highsLoc, highs);
+		int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 		glUniform2f(renderResLoc, renderWidth, renderHeight);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		lastRenderedTime = currentTime;
@@ -230,7 +253,7 @@ void renderGL(){
 	glBindVertexArray(vao);
 	glBindVertexArray(vbo);
 	glUseProgram(viewportShaderProgram);
-	viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
+	int viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
 	glUniform2f(viewportResLoc, viewportWidth, viewportHeight);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -26,48 +26,57 @@
 #define MAX_VERTEX_MEMORY 512 * 1024
 #define MAX_ELEMENT_MEMORY 128 * 1024
 
-// Global variables
+#define pi 3.14159265358979323846
+#define eps 0.000001
+
+// Rendering variables
 unsigned int viewportWidth = 1280, viewportHeight = 720;
 unsigned int renderWidth = 1280, renderHeight = 720;
 unsigned int newRenderWidth = 1280, newRenderHeight = 720;
 unsigned int frameRate = 60;
 unsigned int bitrate = 24000;
-struct nk_context *ctx;
+
+// Global context variables
 SDL_GLContext context;
+SDL_Window* window;
+struct nk_context *ctx;
+
+// Application behaviour variables
+unsigned char playing = 0;
+unsigned char reloadShaders = 0;
+unsigned char hideUI = 0;
+unsigned char saveFrame = 0;
+unsigned char startVideo = 0;
+unsigned char saveVideo = 0;
+
+// Time variables
 unsigned long currentTimeSelect, prevTimeSelect;
 double currentFrameTime = 0, prevFrameTime = 0, currentTime = 0, deltaTime;
-SDL_Window* window;
-unsigned int saveFrame = 0, startVideo = 0, saveVideo = 0;
 unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
 float renderVideoLength = 60;
-char playing = 0;
-char reloadShaders = 0;
-char hideUI = 0;
 double lastRenderedTime = -1;
-unsigned int audioLen = 0;
-unsigned char* lows, mids, highs;
+
+// Shader variables
 char shaderPath[256] = "data/shader.frag";
 int shaderPathLen = 16;
 
+// Audio variables
+char trackPath[256] = "";
+int trackPathLen = 0;
+char reloadTrack = 0;
+float lows = 0, mids = 0, highs = 0;
+float maxLows = eps, maxMids = eps, maxHighs = eps;
+float normalizedLows = 0, normalizedMids = 0, normalizedHighs = 0;
+float smoothness = 6, power = 1, drop = 0;
+
 // Linear interpolation
-double lerp(double a, double b, double x) {
+float lerp(float a, float b, float x) {
 	return (1-x)*a + x*b;
 }
 
-// Load file contents to string
-char* loadString(char* path) {
-	SDL_RWops* f = SDL_RWFromFile(path, "r");
-	if (f == NULL) {
-		printf("Error when reading file %s\n", path);
-		return NULL;
-	}
-	Sint64 len = SDL_RWseek(f, 0, SEEK_END);
-	SDL_RWseek(f, 0, SEEK_SET);
-	char* ret = malloc(len+1);
-	SDL_RWread(f, ret, len, 1);
-	SDL_RWclose(f);
-	ret[len] = (char)0;
-	return ret;
+// Clamp value between min and max
+float clamp(float min, float max, float x) {
+	return (x < min ? min : (x > max ? max : x));
 }
 
 #endif

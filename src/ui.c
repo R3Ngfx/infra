@@ -3,6 +3,7 @@
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "global.c"
+#include "audio.c"
 
 #define gap 20
 
@@ -25,7 +26,7 @@ void renderUI() {
 
 	if (hideUI) return;
 
-	if (nk_begin(ctx, "RENDER", nk_rect(viewportWidth-300-gap, gap, 300, 400),
+	if (nk_begin(ctx, "RENDER", nk_rect(viewportWidth-300-gap, gap, 300, 600),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
 		if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
@@ -51,20 +52,26 @@ void renderUI() {
 			nk_tree_pop(ctx);
 		}
 
-		/*
 		if (nk_tree_push(ctx, NK_TREE_TAB, "AUDIO", NK_MAXIMIZED)) {
 			float ratio[] = {0.8, 0.2f};
-			nk_label(ctx, "Audio Path:", NK_TEXT_ALIGN_LEFT);
+			nk_label(ctx, "Track Path:", NK_TEXT_ALIGN_LEFT);
 			nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
-			nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, shaderPath, &shaderPathLen, 256, nk_filter_default); 
+			nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, trackPath, &trackPathLen, 256, nk_filter_default); 
 			if (nk_button_label(ctx, "Load")) {
-				// Load shader
-				shaderPath[shaderPathLen] = '\0';
-				reloadShaders = 1;
+				// Load track
+				trackPath[trackPathLen] = '\0';
+				reloadTrack = 1;
 			}
+			nk_layout_row_dynamic(ctx, 10, 2);
+			nk_label(ctx, "Visualization:", NK_TEXT_ALIGN_LEFT);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_float(ctx, "Smoothness", 0, &smoothness, frameRate, 0.1, 0.1);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_float(ctx, "Power", 0.01, &power, 20, 0.1, 0.1);
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_property_float(ctx, "Drop", 0, &drop, 1, 0.1, 0.1);
 			nk_tree_pop(ctx);
 		}
-		*/
 
 		if (nk_tree_push(ctx, NK_TREE_TAB, "CONFIG", NK_MAXIMIZED)) {
 
@@ -103,7 +110,10 @@ void renderUI() {
 		nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
 		nk_layout_row_push(ctx, 20);
 		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
-			playing = !playing;
+			if (!saveVideo){
+				playing = !playing;
+				playPauseAudio();
+			}
 		}
 		nk_layout_row_push(ctx, 30);
 		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);

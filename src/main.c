@@ -4,24 +4,22 @@
 
 #include "ui.c"
 #include "render.c"
-#include "audio.c"
 #include <SDL2/SDL_audio.h>
 #include <SDL2/SDL_keycode.h>
 #include <libavcodec/avcodec.h>
 
 int main() {
 
-	// Load GL
+	// Initialization
 	if (!initGL()) {
 		printf("Error initializing GL\n");
 		return 1;
 	}
-
-	// Load UI
-	if (!initUI(window)) {
+	if (!initUI()) {
 		printf("Error initializing UI\n");
 		return 1;
 	}
+	initAudio();
 
 	// Main loop
 	while (1) {
@@ -42,6 +40,8 @@ int main() {
 			if (prevTimeSelect != currentTimeSelect) {
 				currentTime = currentTimeSelect/100.0f * renderVideoLength;
 				prevTimeSelect = currentTimeSelect;
+				seekAudio();
+				renderAudio(1);
 			} else {
 				currentTimeSelect = 100*currentTime/renderVideoLength;
 				currentTimeSelect = currentTimeSelect > 100 ? 100 : currentTimeSelect;
@@ -61,7 +61,10 @@ int main() {
 				case SDL_KEYDOWN: {
 					switch (event.key.keysym.sym) {
 						case SDLK_SPACE: {
-							playing = !playing;
+							if(!saveVideo) {
+								playing = !playing;
+								playPauseAudio();
+							}
 							break;
 						}
 						case SDLK_LEFT: {
@@ -107,10 +110,15 @@ int main() {
 			saveVideo = 1;
 			currentVideoFrame = 0;
 			maxVideoFrames = renderVideoLength*frameRate;
+			SDL_GL_SetSwapInterval(0);
 		}
 		if (reloadShaders) {
 			setShaders();
 			reloadShaders = 0;
+		}
+		if (reloadTrack) {
+			loadTrack(trackPath);
+			reloadTrack = 0;
 		}
 
 		// Adjust render resoltion
@@ -121,15 +129,16 @@ int main() {
 			lastRenderedTime = -1;
 		}
 
-		// Render UI
+		// Rendering
+		if (saveVideo || playing) renderAudio(saveVideo);
 		renderUI();
-
-		// Render GL
 		renderGL();
 
 	}
 
 exit:
+	uninitExport();
+	uninitAudio();
 	uninitUI();
 	uninitGL();
 	SDL_Quit();
