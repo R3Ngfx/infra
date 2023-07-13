@@ -102,7 +102,7 @@ int main() {
 
 		// Handle program events
 		if (startVideo) {
-			if (!initExport()) {
+			if (!initVideoExport()) {
 				printf("Error initializing libav\n");
 				return 1;
 			}
@@ -120,6 +120,10 @@ int main() {
 			loadTrack(trackPath);
 			reloadTrack = 0;
 		}
+		if (changePauseAudio) {
+			changePauseAudio = 0;
+			playPauseAudio();
+		}
 
 		// Adjust render resoltion
 		if (newRenderWidth != renderWidth || newRenderHeight != renderHeight) {
@@ -130,14 +134,13 @@ int main() {
 		}
 
 		// Rendering
-		if (saveVideo || playing) renderAudio(saveVideo);
+		renderAudio();
 		renderUI();
 		renderGL();
 
 	}
 
 exit:
-	uninitExport();
 	uninitAudio();
 	uninitUI();
 	uninitGL();

@@ -15,7 +15,6 @@ ma_decoder decoder;
 ma_device_config deviceConfig;
 ma_device device;
 
-#define SAMPLE_RATE 48000
 #define BUFFER_SIZE 2048
 #define FFT_SIZE BUFFER_SIZE/2
 
@@ -26,7 +25,7 @@ float hann[BUFFER_SIZE];
 
 // Given a frequency in Hz return the index of its position in the FFT output array
 int freqToIndex(int f) {
-	return (int)(BUFFER_SIZE*f/(float)SAMPLE_RATE);
+	return (int)(BUFFER_SIZE*f/(float)outputSampleRate);
 }
 
 void updateFFT(float* inputBuffer) {
@@ -54,9 +53,9 @@ void updateFFT(float* inputBuffer) {
 		}
 	}
 	// Update max
-	maxLows = currentLows > maxLows ? currentLows : maxLows;
-	maxMids = currentMids > maxMids ? currentMids : maxMids;
-	maxHighs = currentHighs > maxHighs ? currentHighs : maxHighs;
+	maxLows = max(currentLows, maxLows);
+	maxMids = max(currentMids, maxMids);
+	maxHighs = max(currentHighs, maxHighs);
 	// Check division by 0 to avoid NaNs
 	if (maxLows > 0) normalizedLows = currentLows/maxLows;
 	if (maxMids > 0) normalizedMids = currentMids/maxMids;
@@ -69,6 +68,7 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 	ma_decoder* callbackDecoder = (ma_decoder*)callbackDevice->pUserData;
 	if (callbackDecoder == NULL) return;
 	ma_decoder_read_pcm_frames(callbackDecoder, callbackOutput, frameCount);
+	/*
 	// Do visualization with output audio if not rendering
 	if (!saveVideo && playing) {
 		for (int i = 0; i < frameCount; i++) {
@@ -80,27 +80,34 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 			}
 		}
 	}
+	*/
 	(void)callbackInput;
 }
 
 int loadTrack(char* path) {
+	// Load SDL track for rendering
+	SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength);
 	// Load miniaudio track for playback
 	if (ma_decoder_init_file(path, NULL, &decoder) != MA_SUCCESS) {
 		printf("Error loading audio file\n");
 		return 0;
 	}
+	if (spec.freq != decoder.outputSampleRate) {
+		printf("Incompatible sample rate when loading audio file\n");
+		return 0;
+	}
 	deviceConfig = ma_device_config_init(ma_device_type_playback);
 	deviceConfig.playback.format = decoder.outputFormat;
 	deviceConfig.playback.channels = decoder.outputChannels;
-	deviceConfig.sampleRate = SAMPLE_RATE;
+	deviceConfig.sampleRate = decoder.outputSampleRate;
 	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.pUserData = &decoder;
+	trackSampleRate = spec.freq;
+	trackChannels = spec.channels;
 	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
 		printf("Error initializing audio device\n");
 		return 0;
 	}
-	// Load SDL track for rendering
-	SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength);
 	return 1;
 }
 
@@ -142,35 +149,27 @@ void playPauseAudio() {
 
 void seekAudio() {
 	if (trackLength == 0) return;
-	ma_decoder_seek_to_pcm_frame(&decoder, currentTime*SAMPLE_RATE);
+	ma_decoder_seek_to_pcm_frame(&decoder, currentTime*outputSampleRate);
 }
 
-void renderAudio(int offline) {
+void renderAudio() {
 	if (trackLength == 0) return;
-	if (offline) {
-		// Get starting index of current pcm frame window
-		int idx = currentTime*SAMPLE_RATE-BUFFER_SIZE;
-		ma_uint64 length = 0;
-		ma_data_source_get_length_in_pcm_frames(&decoder, &length);
-		idx = clamp(0, length, idx);
-		// Read pcm frames from data source
-		ma_data_source_seek_to_pcm_frame(&decoder, idx);
-		ma_decoder_read_pcm_frames(&decoder, audioBuffer, BUFFER_SIZE);
-		ma_uint64 framesRead = 0;
-		ma_data_source_read_pcm_frames(&decoder, audioBuffer, BUFFER_SIZE, &framesRead, 0);
-		// Update fft with new input buffer
-		updateFFT(audioBuffer);
-		if (!saveVideo) {
-			lows = normalizedLows;
-			mids = normalizedMids;
-			highs = normalizedHighs;
-			return;
+	// Fill track buffer with current sound
+	int idx = currentTime*trackSampleRate*trackChannels-BUFFER_SIZE;
+	idx = clamp(0, (trackLength/sizeof(Uint8))*trackChannels, idx);
+	for (int i = 0; i < BUFFER_SIZE; i++) {
+		float v;
+		for (int c = 0; c < trackChannels; c++) {
+			v = max(v, trackBuffer[idx+trackChannels*i+c]);
 		}
+		audioBuffer[i] = v;
 	}
-	// Drop max values
-	maxLows -= deltaTime*drop;
-	maxMids -= deltaTime*drop;
-	maxHighs -= deltaTime*drop;
+	// Update fft with new input buffer
+	updateFFT(audioBuffer);
+	// Drop max values with clamping
+	maxLows = max(maxLows-deltaTime*drop, 0);
+	maxMids = max(maxMids-deltaTime*drop, 0);
+	maxHighs = max(maxHighs-deltaTime*drop, 0);
 	// Assign final smoothed values
 	lows = lerp(lows, pow(normalizedLows, power), deltaTime*smoothness);
 	mids = lerp(mids, pow(normalizedMids, power), deltaTime*smoothness);

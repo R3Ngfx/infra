@@ -3,7 +3,6 @@
 // License: GNU General Public License (See LICENSE for full details)
 
 #include "global.c"
-#include "audio.c"
 
 #define gap 20
 
@@ -13,6 +12,16 @@ int initUI(){
 	struct nk_font_atlas *atlas;
 	nk_sdl_font_stash_begin(&atlas);
 	nk_sdl_font_stash_end();
+	/* TODO: Implement file loading
+	tinydir_open_sorted(&dir, "data");
+	for (int i = 0; i < dir.n_files; i++) {
+		tinydir_file file;
+		tinydir_readfile_n(&dir, &file, i);
+		if (file.name[0] == '.') continue;
+		printf("%s", file.name);
+		if (file.is_dir) printf("/");
+		printf("\n");
+	} */
 	return 1;
 }
 
@@ -84,7 +93,7 @@ void renderUI() {
 			nk_layout_row_dynamic(ctx, 10, 2);
 			nk_label(ctx, "Render Bitrate:", NK_TEXT_ALIGN_LEFT);
 			nk_layout_row_dynamic(ctx, 30, 1);
-			nk_property_int(ctx, "Bitrate(kb/s):", 1, &bitrate, 2147483647, 1, 1);
+			nk_property_int(ctx, "Bitrate(kb/s):", 1, &videoBitrate, 2147483647, 1, 1);
 
 			nk_layout_row_dynamic(ctx, 10, 2);
 			nk_label(ctx, "Render Framerate:", NK_TEXT_ALIGN_LEFT);
@@ -112,7 +121,7 @@ void renderUI() {
 		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
 			if (!saveVideo){
 				playing = !playing;
-				playPauseAudio();
+				changePauseAudio = 1;
 			}
 		}
 		nk_layout_row_push(ctx, 30);
