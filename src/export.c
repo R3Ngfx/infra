@@ -181,7 +181,7 @@ int initAudioStream() {
 	}
 	av_opt_set_chlayout(swrContext, "in_chlayout", &audioStream.codecContext->ch_layout, 0);
 	av_opt_set_int(swrContext, "in_sample_rate", trackSampleRate, 0);
-	av_opt_set_sample_fmt(swrContext, "in_sample_fmt", AV_SAMPLE_FMT_U8, 0);
+	av_opt_set_sample_fmt(swrContext, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 	av_opt_set_chlayout(swrContext, "out_chlayout", &audioStream.codecContext->ch_layout, 0);
 	av_opt_set_int(swrContext, "out_sample_rate", audioStream.codecContext->sample_rate, 0);
 	av_opt_set_sample_fmt(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
@@ -284,16 +284,13 @@ void encodeVideoFrame() {
 		int16_t* a = (int16_t*)audioStream.tempFrame->data[0];
 		for (int j = 0; j < audioStream.tempFrame->nb_samples; j++) {
 			for (int i = 0; i < audioStream.codecContext->ch_layout.nb_channels; i++) {
-				unsigned char v = (trackLength == 0 ? 0 :
-					trackBuffer[audioStream.codecContext->ch_layout.nb_channels*currentAudioSample+i]);
+				int16_t v = (trackLength == 0 ? 0 : getTrackSample(audioStream.codecContext->ch_layout.nb_channels*currentAudioSample, i));
 				*a++ = v; // I'm sorry for this crime, it's how they do it in the samples
 			}
 			currentAudioSample++;
 			audioStream.tempFrame->pts += audioStream.tempFrame->nb_samples;
 		}
-		int outSamples = av_rescale_rnd(swr_get_delay(swrContext,
-			audioStream.codecContext->sample_rate) + audioStream.frame->nb_samples,
-			audioStream.codecContext->sample_rate, audioStream.codecContext->sample_rate, AV_ROUND_UP);
+		int outSamples = swr_get_delay(swrContext, audioStream.codecContext->sample_rate) + audioStream.frame->nb_samples;
 		if (av_frame_make_writable(audioStream.frame) < 0) {
 			printf("Error making audio frame writeable\n");
 			return;

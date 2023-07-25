@@ -7,10 +7,6 @@
 #include "miniaudio/miniaudio.h"
 #include <fftw3.h>
 
-SDL_AudioSpec spec;
-unsigned int trackLength = 0;
-unsigned char* trackBuffer;
-
 ma_decoder decoder;
 ma_device_config deviceConfig;
 ma_device device;
@@ -155,12 +151,13 @@ void seekAudio() {
 void renderAudio() {
 	if (trackLength == 0) return;
 	// Fill track buffer with current sound
-	int idx = currentTime*trackSampleRate*trackChannels-BUFFER_SIZE;
-	idx = clamp(0, (trackLength/sizeof(Uint8))*trackChannels, idx);
+	int idx = currentTime*trackSampleRate-BUFFER_SIZE;
+	int totalSamples = trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);
+	idx = clamp(0, totalSamples-BUFFER_SIZE, idx);
 	for (int i = 0; i < BUFFER_SIZE; i++) {
-		float v;
+		float v = 0;
 		for (int c = 0; c < trackChannels; c++) {
-			v = max(v, trackBuffer[idx+trackChannels*i+c]);
+			v = max(v, getTrackSample(idx+i, c));
 		}
 		audioBuffer[i] = v;
 	}

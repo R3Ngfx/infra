@@ -6,7 +6,7 @@ Infra is a tool for creating textures and videos by exporting the output of GLSL
 ## Usage
 With Infra you can load and visualize fragment shaders, adjust the export parameters and render video sequences or individual frames.
 Infra can be used for creating images, animations and even audio visualizers and music videos with a single fragment shader.
-Check the *INFO* tab in the application for more details.
+Check the *INFO* tab in the application for more details about its usage.
 
 ### Shader syntax
 Infra uses GLSL shaders. Five different variables are exposed and can be used in the shader:

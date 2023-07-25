@@ -70,6 +70,7 @@ int main() {
 						case SDLK_LEFT: {
 							if (!saveVideo) {
 								currentTime -= 1.0/frameRate;
+								seekAudio();
 								if (currentTime < 0) currentTime = 0;
 							}
 							break;
@@ -77,6 +78,7 @@ int main() {
 						case SDLK_RIGHT: {
 							if (!saveVideo) {
 								currentTime += 1.0/frameRate;
+								seekAudio();
 							}
 							break;
 						}
