@@ -64,18 +64,19 @@ float renderVideoLength = 60;
 double lastRenderedTime = -1;
 
 // Directory variables
-tinydir_dir dir;
+tinydir_dir dataDir;
 char videoFilename[256] = "out/video.mp4";
 int videoFilenameLen = 13;
-char shaderPath[256] = "data/shader.frag";
+char shaderPath[4096] = "data/shaders/shader.frag";
 int shaderPathLen = 16;
 
 // Audio variables
-char trackPath[256] = "";
+char trackPath[4096] = "";
 int trackPathLen = 0;
 SDL_AudioSpec spec;
 unsigned int trackLength = 0;
 unsigned char* trackBuffer;
+float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
 char reloadTrack = 0;
@@ -104,33 +105,12 @@ float max(float a, float b) {
 
 int16_t getTrackSample(int sample, int channel) {
 	if (trackLength == 0) return 0;
-	int16_t ret = 0;
-	int idx = sample*trackChannels+channel;
-	//printf("Indexing at %i of %i\n", idx, trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8));
-	switch (spec.format) {
-		/*
-		case AUDIO_U8:
-			break;
-		case AUDIO_S8:
-			break;
-		*/
-		case AUDIO_U16SYS:
-			ret = ((uint16_t*)trackBuffer)[idx]-(1<<(16-1));
-			break;
-		case AUDIO_S16SYS:
-			ret = ((int16_t*)trackBuffer)[idx];
-			break;
-		/*
-		case AUDIO_S32SYS:
-			break;
-		case AUDIO_F32SYS:
-			break;
-		*/
-		default:
-			printf("Error: Unrecognized audio format\n");
-			break;
+	if (spec.format != AUDIO_S16) {
+		printf("Error: Unrecognized audio format\n");
+		return 0;
 	}
-	return ret;
+	//printf("Indexing at %i of %i\n", sample*trackChannels+channel, trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8));
+	return ((int16_t*)trackBuffer)[sample*trackChannels+channel];
 }
 
 

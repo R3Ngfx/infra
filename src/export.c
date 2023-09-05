@@ -164,7 +164,7 @@ int initAudioStream() {
 	audioStream.tempFrame->sample_rate = audioStream.codecContext->sample_rate;
 	audioStream.tempFrame->nb_samples = audioStream.codecContext->frame_size;
 	audioStream.tempFrame->pts = -audioStream.tempFrame->nb_samples;
-	if (av_frame_get_buffer(audioStream.tempFrame, 0) < 0) {
+	if (audioStream.tempFrame->nb_samples && av_frame_get_buffer(audioStream.tempFrame, 0) < 0) {
 		printf("Error allocating audio temporary buffer\n");
 		return 0;
 	}
@@ -235,7 +235,7 @@ void uninitVideoExport() {
 	}
 	avformat_free_context(outputContext);
 }
-
+	
 // Encodes frame into stream (assumes frame has already been assigned)
 int encode(struct OutputStream outputStream) {
 	int ret = 0;
@@ -284,7 +284,8 @@ void encodeVideoFrame() {
 		int16_t* a = (int16_t*)audioStream.tempFrame->data[0];
 		for (int j = 0; j < audioStream.tempFrame->nb_samples; j++) {
 			for (int i = 0; i < audioStream.codecContext->ch_layout.nb_channels; i++) {
-				int16_t v = (trackLength == 0 ? 0 : getTrackSample(audioStream.codecContext->ch_layout.nb_channels*currentAudioSample, i));
+				int v = getTrackSample(audioStream.codecContext->ch_layout.nb_channels*currentAudioSample, i);
+				v = 0;
 				*a++ = v; // I'm sorry for this crime, it's how they do it in the samples
 			}
 			currentAudioSample++;

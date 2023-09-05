@@ -64,32 +64,18 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 	ma_decoder* callbackDecoder = (ma_decoder*)callbackDevice->pUserData;
 	if (callbackDecoder == NULL) return;
 	ma_decoder_read_pcm_frames(callbackDecoder, callbackOutput, frameCount);
-	/*
-	// Do visualization with output audio if not rendering
-	if (!saveVideo && playing) {
-		for (int i = 0; i < frameCount; i++) {
-			audioBuffer[audioBufferPos] = ((float*)callbackOutput)[i];
-			audioBufferPos++;
-			if (audioBufferPos == BUFFER_SIZE) {
-				audioBufferPos = 0;
-				updateFFT(audioBuffer);
-			}
-		}
-	}
-	*/
 	(void)callbackInput;
 }
 
 int loadTrack(char* path) {
 	// Load SDL track for rendering
 	SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength);
+	trackSampleRate = spec.freq;
+	trackChannels = spec.channels;
+	trackDuration = trackLength/trackSampleRate/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);
 	// Load miniaudio track for playback
 	if (ma_decoder_init_file(path, NULL, &decoder) != MA_SUCCESS) {
 		printf("Error loading audio file\n");
-		return 0;
-	}
-	if (spec.freq != decoder.outputSampleRate) {
-		printf("Incompatible sample rate when loading audio file\n");
 		return 0;
 	}
 	deviceConfig = ma_device_config_init(ma_device_type_playback);
@@ -98,8 +84,6 @@ int loadTrack(char* path) {
 	deviceConfig.sampleRate = decoder.outputSampleRate;
 	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.pUserData = &decoder;
-	trackSampleRate = spec.freq;
-	trackChannels = spec.channels;
 	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
 		printf("Error initializing audio device\n");
 		return 0;
@@ -152,8 +136,7 @@ void renderAudio() {
 	if (trackLength == 0) return;
 	// Fill track buffer with current sound
 	int idx = currentTime*trackSampleRate-BUFFER_SIZE;
-	int totalSamples = trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);
-	idx = clamp(0, totalSamples-BUFFER_SIZE, idx);
+	idx = clamp(0, (trackDuration*trackSampleRate)-BUFFER_SIZE, idx);
 	for (int i = 0; i < BUFFER_SIZE; i++) {
 		float v = 0;
 		for (int c = 0; c < trackChannels; c++) {
