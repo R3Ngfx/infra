@@ -43,23 +43,23 @@ int initVideoStream() {
 	// Allocate context
 	videoCodec = avcodec_find_encoder(format->video_codec);
 	if (!(videoCodec)) {
-		printf("Error finding video encoder\n");
+		warning("Error finding video encoder");
 		return 0;
 	}
 	videoStream.packet = av_packet_alloc();
 	if (!videoStream.packet) {
-		printf("Error allocating video packet\n");
+		warning("Error allocating video packet");
 		return 0;
 	}
 	videoStream.stream = avformat_new_stream(outputContext, NULL);
 	if (!videoStream.stream) {
-		printf("Error allocating video stream\n");
+		warning("Error allocating video stream");
 		return 0;
 	}
 	videoStream.stream->id = outputContext->nb_streams-1;
 	videoStream.codecContext = avcodec_alloc_context3(videoCodec);
 	if (!videoStream.codecContext) {
-		printf("Error allocating video codec context\n");
+		warning("Error allocating video codec context");
 		return 0;
 	}
 	// Assign video format
@@ -78,7 +78,7 @@ int initVideoStream() {
 	}
 	// Open codec
 	if (avcodec_open2(videoStream.codecContext, videoCodec, NULL) < 0) {
-		printf("Error opening video codec\n");
+		warning("Error opening video codec");
 		return 0;
 	}
 	// Init reusable frame for writing
@@ -87,12 +87,12 @@ int initVideoStream() {
 	videoStream.frame->width = videoStream.codecContext->width;
 	videoStream.frame->height = videoStream.codecContext->height;
 	if (av_frame_get_buffer(videoStream.frame, 0) < 0) {
-		printf("Error allocating video frame\n");
+		warning("Error allocating video frame");
 		return 0;
 	}
 	// Copy stream parameters to the muxer
 	if (avcodec_parameters_from_context(videoStream.stream->codecpar, videoStream.codecContext) < 0) {
-		printf("Error copying stream parameters\n");
+		warning("Error copying stream parameters");
 		return 0;
 	}
 	swsContext = sws_getContext(renderWidth, renderHeight, AV_PIX_FMT_RGB24, renderWidth, renderHeight,
@@ -105,23 +105,23 @@ int initAudioStream() {
 	// Allocate context
 	audioCodec = avcodec_find_encoder(format->audio_codec);
 	if (!(audioCodec)) {
-		printf("Error finding audio encoder\n");
+		warning("Error finding audio encoder");
 		return 0;
 	}
 	audioStream.packet = av_packet_alloc();
 	if (!audioStream.packet) {
-		printf("Error allocating audio packet\n");
+		warning("Error allocating audio packet");
 		return 0;
 	}
 	audioStream.stream = avformat_new_stream(outputContext, NULL);
 	if (!audioStream.stream) {
-		printf("Error allocating audio stream\n");
+		warning("Error allocating audio stream");
 		return 0;
 	}
 	audioStream.stream->id = outputContext->nb_streams-1;
 	audioStream.codecContext = avcodec_alloc_context3(audioCodec);
 	if (!audioStream.codecContext) {
-		printf("Error allocating audio codec context\n");
+		warning("Error allocating audio codec context");
 		return 0;
 	}
 	// Assign audio format
@@ -137,13 +137,13 @@ int initAudioStream() {
 	}
 	// Open codec
 	if (avcodec_open2(audioStream.codecContext, audioCodec, NULL) < 0) {
-		printf("Error opening audio codec\n");
+		warning("Error opening audio codec");
 		return 0;
 	}
 	// Init frames
 	audioStream.frame = av_frame_alloc();
 	if (!audioStream.frame) {
-		printf("Error allocationg audio frame\n");
+		warning("Error allocationg audio frame");
 		return 0;
 	}
 	audioStream.frame->format = audioStream.codecContext->sample_fmt;
@@ -151,12 +151,12 @@ int initAudioStream() {
 	audioStream.frame->sample_rate = audioStream.codecContext->sample_rate;
 	audioStream.frame->nb_samples = audioStream.codecContext->frame_size;
 	if (av_frame_get_buffer(audioStream.frame, 0) < 0) {
-		printf("Error allocating audio buffer\n");
+		warning("Error allocating audio buffer");
 		return 0;
 	}
 	audioStream.tempFrame = av_frame_alloc();
 	if (!audioStream.tempFrame) {
-		printf("Error allocationg audio temporary frame\n");
+		warning("Error allocationg audio temporary frame");
 		return 0;
 	}
 	audioStream.tempFrame->format = audioStream.codecContext->sample_fmt;
@@ -165,18 +165,18 @@ int initAudioStream() {
 	audioStream.tempFrame->nb_samples = audioStream.codecContext->frame_size;
 	audioStream.tempFrame->pts = -audioStream.tempFrame->nb_samples;
 	if (audioStream.tempFrame->nb_samples && av_frame_get_buffer(audioStream.tempFrame, 0) < 0) {
-		printf("Error allocating audio temporary buffer\n");
+		warning("Error allocating audio temporary buffer");
 		return 0;
 	}
 	// Copy parameters to muxer
 	if (avcodec_parameters_from_context(audioStream.stream->codecpar, audioStream.codecContext)) {
-		printf("Error copying stream parameters\n");
+		warning("Error copying stream parameters");
 		return 0;
 	}
 	// Init resampler
 	swrContext = swr_alloc();
 	if (!swrContext) {
-		printf("Error allocating audio resampler\n");
+		warning("Error allocating audio resampler");
 		return 0;
 	}
 	av_opt_set_chlayout(swrContext, "in_chlayout", &audioStream.codecContext->ch_layout, 0);
@@ -186,7 +186,7 @@ int initAudioStream() {
 	av_opt_set_int(swrContext, "out_sample_rate", audioStream.codecContext->sample_rate, 0);
 	av_opt_set_sample_fmt(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 	if (swr_init(swrContext) < 0) {
-		printf("Error initializing audio resampler\n");
+		warning("Error initializing audio resampler");
 		return 0;
 	}
 	return 1;
@@ -196,7 +196,7 @@ int initVideoExport() {
 	// Allocate media context
 	avformat_alloc_output_context2(&outputContext, NULL, NULL, videoFilename);
 	if (!outputContext) {
-		printf("Error allocating output context\n");
+		warning("Error allocating output context");
 		return 0;
 	}
 	format = outputContext->oformat;
@@ -209,12 +209,14 @@ int initVideoExport() {
 	av_dump_format(outputContext, 0, videoFilename, AVIO_FLAG_WRITE);
 	if (!(format->flags & AVFMT_NOFILE)) {
 		if (avio_open(&outputContext->pb, videoFilename, AVIO_FLAG_WRITE) < 0) {
-			printf("Error opening %s\n", videoFilename);
+			char msg[1024];
+			sprintf(msg, "Error opening %s", videoFilename);
+			warning(msg);
 			return 0;
 		}
 	}
 	if (avformat_write_header(outputContext, NULL) < 0) {
-		printf("Error writing header\n");
+		warning("Error writing header");
 		return 0;
 	}
 	return 1;
@@ -240,7 +242,9 @@ void uninitVideoExport() {
 int encode(struct OutputStream outputStream) {
 	int ret = 0;
 	if ((ret = avcodec_send_frame(outputStream.codecContext, outputStream.frame)) < 0) {
-		printf("Error sending frame for encoding (%s)\n", av_err2str(ret));
+		char msg[4096];
+		sprintf(msg, "Error sending frame for encoding (%s)", av_err2str(ret));
+		warning(msg);
 		return 0;
 	}
 	while (ret >= 0) {
@@ -248,14 +252,18 @@ int encode(struct OutputStream outputStream) {
 		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
 			return 1;
 		} else if (ret < 0) {
-			printf("Error during encoding (%s)\n", av_err2str(ret));
+			char msg[4096];
+			sprintf(msg, "Error during encoding (%s)\n", av_err2str(ret));
+			warning(msg);
 			return 0;
 		}
 		av_packet_rescale_ts(outputStream.packet, outputStream.codecContext->time_base, outputStream.stream->time_base);
 		outputStream.packet->stream_index = outputStream.stream->index;
 		ret = av_interleaved_write_frame(outputContext, outputStream.packet);
 		if (ret < 0) {
-			printf("Error while writing output packet (%s)\n", av_err2str(ret));
+			char msg[4096];
+			sprintf(msg, "Error while writing output packet (%s)\n", av_err2str(ret));
+			warning(msg);
 			return 0;
 		}
 	}
@@ -276,7 +284,7 @@ void encodeVideoFrame() {
 		free(renderPixels);
 		videoStream.frame->pts = currentVideoFrame++;
 		if (!encode(videoStream)) {
-			printf("Error encoding video frame\n");
+			warning("Error encoding video frame");
 			return;
 		}
 	} else {
@@ -293,19 +301,19 @@ void encodeVideoFrame() {
 		}
 		int outSamples = swr_get_delay(swrContext, audioStream.codecContext->sample_rate) + audioStream.frame->nb_samples;
 		if (av_frame_make_writable(audioStream.frame) < 0) {
-			printf("Error making audio frame writeable\n");
+			warning("Error making audio frame writeable");
 			return;
 		}
 		if (swr_convert(swrContext, audioStream.frame->data, outSamples,
 		(const uint8_t **)audioStream.tempFrame->data, audioStream.tempFrame->nb_samples) < 0) {
-			printf("Error while converting audio frame\n");
+			warning("Error while converting audio frame");
 			return;
 		}
 		audioStream.frame->pts = av_rescale_q(audioStream.samples,
 				(AVRational){1, audioStream.codecContext->sample_rate}, audioStream.codecContext->time_base);
 		audioStream.samples += outSamples;
 		if (!encode(audioStream)) {
-			printf("Error encoding audio frame\n");
+			warning("Error encoding audio frame");
 			return;
 		}
 	}

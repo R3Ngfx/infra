@@ -45,7 +45,9 @@ int checkShader(GLuint shader){
 	if (!success) {
 		char infoLog[512];
 		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		printf("Error while compiling shader:\n%s", infoLog);
+		char msg[4096];
+		sprintf(msg, "Error while compiling shader: %s", infoLog);
+		warning(msg);
 		return 0;
 	}
 	return 1;
@@ -55,7 +57,9 @@ int checkShader(GLuint shader){
 char* loadString(char* path) {
 	SDL_RWops* f = SDL_RWFromFile(path, "r");
 	if (f == NULL) {
-		printf("Error when reading file %s\n", path);
+		char msg[4096];
+		sprintf(msg,"Error when reading file %s", path);
+		warning(msg);
 		return NULL;
 	}
 	Sint64 len = SDL_RWseek(f, 0, SEEK_END);
@@ -92,7 +96,7 @@ int setFBO() {
 	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
 	glDrawBuffers(1, DrawBuffers);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		printf("Error while setting up FBO\n");
+		warning("Error while setting up FBO");
 		return 0;
 	}
 	return 1;
@@ -117,10 +121,11 @@ int setShaders() {
 	glLinkProgram(shaderProgram);
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 	if (!success) {
-		printf("Error while linking render shaders:\n");
 		char infoLog[512];
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		printf("%s", infoLog);
+		char msg[4096];
+		sprintf(msg, "Error while linking render shaders: %s", infoLog);
+		warning(msg);
 		return 0;
 	}
 	glDeleteShader(fragShader);
@@ -136,10 +141,11 @@ int setShaders() {
 	glLinkProgram(viewportShaderProgram);
 	glGetProgramiv(viewportShaderProgram, GL_LINK_STATUS, &success);
 	if (!success) {
-		printf("Error while linking viewport shaders:\n");
 		char infoLog[512];
 		glGetProgramInfoLog(viewportShaderProgram, 512, NULL, infoLog);
-		printf("%s", infoLog);
+		char msg[4096];
+		sprintf(msg, "Error while linking viewport shaders: %s", infoLog);
+		warning(msg);
 		return 0;
 	}
 	glDeleteShader(vertShader);
@@ -166,7 +172,7 @@ int initGL() {
 		SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
 	context = SDL_GL_CreateContext(window);
 	if (context == NULL) {
-		printf("Error initializing SDL\n");
+		warning("Error initializing SDL\n");
 		return 0;
 	}
 
@@ -174,7 +180,7 @@ int initGL() {
 	glViewport(0, 0, viewportWidth, viewportHeight);
 	glewExperimental = 1;
 	if (glewInit() != GLEW_OK) {
-		printf("Error initializing GLEW\n");
+		warning("Error initializing GLEW\n");
 		return 0;
 	}
 

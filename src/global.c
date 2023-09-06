@@ -85,6 +85,26 @@ float maxLows = eps, maxMids = eps, maxHighs = eps;
 float normalizedLows = 0, normalizedMids = 0, normalizedHighs = 0;
 float smoothness = 6, power = 1, drop = 0;
 
+// Error handling
+char warningCount = 0;
+char errorCount = 0;
+char warningMsg[16][4096];
+char errorMsg[4096];
+
+// Add warning message
+void warning(const char* msg) {
+	printf("WARNING: %s\n", msg);
+	sprintf(warningMsg[warningCount], "%s", msg);
+	warningCount++;
+}
+
+// Set error message
+void error(char* msg) {
+	printf("ERROR: %s\n", msg);
+	sprintf(errorMsg, "%s", msg);
+	errorCount = 1;
+}
+
 // Linear interpolation
 float lerp(float a, float b, float x) {
 	return (1-x)*a + x*b;
@@ -106,7 +126,7 @@ float max(float a, float b) {
 int16_t getTrackSample(int sample, int channel) {
 	if (trackLength == 0) return 0;
 	if (spec.format != AUDIO_S16) {
-		printf("Error: Unrecognized audio format\n");
+		error("Unrecognized audio format");
 		return 0;
 	}
 	//printf("Indexing at %i of %i\n", sample*trackChannels+channel, trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8));

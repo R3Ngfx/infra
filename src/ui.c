@@ -14,7 +14,7 @@ char* names[] = {"INFO", "SHADER", "AUDIO", "RENDER"};
 // Loads selected track
 void loadSelectedTrack(char* path) {
 	sprintf(trackPath, "%s", path);
-	trackPathLen = strlen(shaderPath);
+	trackPathLen = strlen(trackPath);
 	reloadTrack = 1;
 }
 
@@ -69,6 +69,24 @@ void uninitUI() {
 
 // UI componentes and structure
 void renderUI() {
+
+	if (errorCount != 0) {
+		if (nk_begin(ctx, "ERROR", nk_rect(viewportWidth/2-200, viewportHeight/2-100, 400, 200),
+			NK_WINDOW_TITLE|NK_WINDOW_BORDER)) {
+
+			nk_layout_row_dynamic(ctx, 125, 1);
+			nk_label_wrap(ctx, errorMsg);
+			float ratio[3] = {0.3333, 0.3333, 0.333};
+			nk_layout_row(ctx, NK_DYNAMIC, 20, 3, ratio);
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+			if (nk_button_label(ctx, "Close")) {
+				errorCount = 2;
+			}
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+		}
+		nk_end(ctx);
+		return;
+	}
 
 	if (hideUI) return;
 
@@ -184,12 +202,12 @@ void renderUI() {
 			default:
 				break;
 		}
-
 	}
 	nk_end(ctx);
 
 	if (nk_begin(ctx, "TIMELINE", nk_rect(gap, viewportHeight-gap-65, viewportWidth-2*gap, 65),
 		NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR)) {
+
 		float ratio[] = {0.8, 0.1, 0.1};
 		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratio);
 		nk_label(ctx, "TIMELINE", NK_TEXT_ALIGN_LEFT);
@@ -210,4 +228,21 @@ void renderUI() {
 		nk_layout_row_end(ctx);
 	}
 	nk_end(ctx);
+
+	if (warningCount > 0) {
+		if (nk_begin(ctx, "WARNING", nk_rect(viewportWidth/2-200, viewportHeight/2-100, 400, 200),
+			NK_WINDOW_TITLE|NK_WINDOW_BORDER)) {
+
+			nk_layout_row_dynamic(ctx, 125, 1);
+			nk_label_wrap(ctx, warningMsg[warningCount-1]);
+			float ratio[3] = {0.3333, 0.3333, 0.333};
+			nk_layout_row(ctx, NK_DYNAMIC, 20, 3, ratio);
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+			if (nk_button_label(ctx, "Close")) {
+				warningCount--;
+			}
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+		}
+		nk_end(ctx);
+	}
 }

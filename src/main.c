@@ -12,17 +12,31 @@ int main() {
 
 	// Initialization
 	if (!initGL()) {
-		printf("Error initializing GL\n");
+		error("Error initializing GL\n");
 		return 1;
 	}
 	if (!initUI()) {
-		printf("Error initializing UI\n");
+		error("Error initializing UI\n");
 		return 1;
 	}
 	initAudio();
 
 	// Main loop
 	while (1) {
+
+		// Stop on fatal error
+		if (errorCount > 0) {
+			if (errorCount > 1) goto exit;
+			SDL_Event event;
+			nk_input_begin(ctx);
+			while (SDL_PollEvent(&event)) {
+				nk_sdl_handle_event(&event);
+			}
+			nk_input_end(ctx);
+			renderUI();
+			renderGL();
+			continue;
+		}
 
 		// Frame time
 		if (saveVideo) {
@@ -105,7 +119,7 @@ int main() {
 		// Handle program events
 		if (startVideo) {
 			if (!initVideoExport()) {
-				printf("Error initializing libav\n");
+				error("Error initializing libav\n");
 				return 1;
 			}
 			startVideo = 0;

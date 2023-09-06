@@ -75,7 +75,7 @@ int loadTrack(char* path) {
 	trackDuration = trackLength/trackSampleRate/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);
 	// Load miniaudio track for playback
 	if (ma_decoder_init_file(path, NULL, &decoder) != MA_SUCCESS) {
-		printf("Error loading audio file\n");
+		warning("Error loading audio file");
 		return 0;
 	}
 	deviceConfig = ma_device_config_init(ma_device_type_playback);
@@ -85,7 +85,7 @@ int loadTrack(char* path) {
 	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.pUserData = &decoder;
 	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
-		printf("Error initializing audio device\n");
+		warning("Error initializing audio device");
 		return 0;
 	}
 	return 1;
@@ -116,12 +116,12 @@ void playPauseAudio() {
 	if (trackLength == 0) return;
 	if (playing) {
 		if (ma_device_start(&device) != MA_SUCCESS) {
-			printf("Error starting audio device\n");
+			warning("Error starting audio device");
 			// TODO: Handle error
 		}
 	} else {
 		if (ma_device_stop(&device) != MA_SUCCESS) {
-			printf("Error stopping audio device\n");
+			warning("Error stopping audio device");
 			// TODO: Handle error
 		}
 	}
