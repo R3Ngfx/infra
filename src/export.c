@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
+
 // Wrapper around output AVStream
 struct OutputStream {
 	AVStream* stream;
@@ -150,7 +153,7 @@ int initAudioStream() {
 	av_channel_layout_copy(&audioStream.frame->ch_layout, &audioStream.codecContext->ch_layout);
 	audioStream.frame->sample_rate = audioStream.codecContext->sample_rate;
 	audioStream.frame->nb_samples = audioStream.codecContext->frame_size;
-	if (av_frame_get_buffer(audioStream.frame, 0) < 0) {
+	if (audioStream.frame->nb_samples && (av_frame_get_buffer(audioStream.frame, 0) < 0)) {
 		warning("Error allocating audio buffer");
 		return 0;
 	}
@@ -164,7 +167,7 @@ int initAudioStream() {
 	audioStream.tempFrame->sample_rate = audioStream.codecContext->sample_rate;
 	audioStream.tempFrame->nb_samples = audioStream.codecContext->frame_size;
 	audioStream.tempFrame->pts = -audioStream.tempFrame->nb_samples;
-	if (audioStream.tempFrame->nb_samples && av_frame_get_buffer(audioStream.tempFrame, 0) < 0) {
+	if (audioStream.tempFrame->nb_samples && (av_frame_get_buffer(audioStream.tempFrame, 0) < 0)) {
 		warning("Error allocating audio temporary buffer");
 		return 0;
 	}
@@ -194,7 +197,7 @@ int initAudioStream() {
 
 int initVideoExport() {
 	// Allocate media context
-	avformat_alloc_output_context2(&outputContext, NULL, NULL, videoFilename);
+	avformat_alloc_output_context2(&outputContext, NULL, NULL, videoPath);
 	if (!outputContext) {
 		warning("Error allocating output context");
 		return 0;
@@ -206,11 +209,11 @@ int initVideoExport() {
 		if (!initAudioStream()) return 0;
 	}
 	// Write format and header to file
-	av_dump_format(outputContext, 0, videoFilename, AVIO_FLAG_WRITE);
+	av_dump_format(outputContext, 0, videoPath, AVIO_FLAG_WRITE);
 	if (!(format->flags & AVFMT_NOFILE)) {
-		if (avio_open(&outputContext->pb, videoFilename, AVIO_FLAG_WRITE) < 0) {
+		if (avio_open(&outputContext->pb, videoPath, AVIO_FLAG_WRITE) < 0) {
 			char msg[1024];
-			sprintf(msg, "Error opening %s", videoFilename);
+			sprintf(msg, "Error opening %s", videoPath);
 			warning(msg);
 			return 0;
 		}
@@ -331,8 +334,8 @@ void exportFrame() {
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glReadPixels(0, 0, renderWidth, renderHeight, GL_BGR, GL_UNSIGNED_BYTE, renderPixels);
 	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
-	SDL_SaveBMP(saveSurf, "out/frame.bmp");
-	SDL_FreeSurface(saveSurf);
+	SDL_SaveBMP(saveSurf, framePath);
+	stbi_write_png((const char*)framePath, renderWidth, renderHeight, 3, saveSurf->pixels, sizeof(unsigned char)*renderWidth*3);
 	free(renderPixels);
 	printf("Saved frame\n");
 	saveFrame = 0;

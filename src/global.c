@@ -65,10 +65,12 @@ double lastRenderedTime = -1;
 
 // Directory variables
 tinydir_dir dataDir;
-char videoFilename[256] = "out/video.mp4";
-int videoFilenameLen = 13;
+char framePath[256] = "out/frame.png";
+int framePathLen = 13;
+char videoPath[256] = "out/video.mp4";
+int videoPathLen = 13;
 char shaderPath[4096] = "data/shaders/shader.frag";
-int shaderPathLen = 16;
+int shaderPathLen = 24;
 
 // Audio variables
 char trackPath[4096] = "";

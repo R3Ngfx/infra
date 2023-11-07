@@ -172,7 +172,7 @@ void renderUI() {
 				}
 				break;
 			case 3:
-				nk_layout_row_dynamic(ctx, 300, 1);
+				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "RENDER", 0)) {
 
 					nk_layout_row_dynamic(ctx, 10, 1);
@@ -195,6 +195,23 @@ void renderUI() {
 					nk_label(ctx, "Length:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_property_float(ctx, "Seconds:", 0, &renderVideoLength, 3600, 1, 0.1);
+
+					float ratio[] = {0.8, 0.2f};
+					nk_layout_row_dynamic(ctx, 10, 1);
+					nk_label(ctx, "Frame export path:", NK_TEXT_ALIGN_LEFT);
+					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, framePath, &framePathLen, 256, nk_filter_default);
+					if (nk_button_label(ctx, "Update")) {
+						framePath[framePathLen] = '\0';
+					}
+
+					nk_layout_row_dynamic(ctx, 10, 1);
+					nk_label(ctx, "Video export path:", NK_TEXT_ALIGN_LEFT);
+					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, videoPath, &videoPathLen, 256, nk_filter_default);
+					if (nk_button_label(ctx, "Update")) {
+						videoPath[videoPathLen] = '\0';
+					}
 
 					nk_group_end(ctx);
 				}
