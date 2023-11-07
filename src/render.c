@@ -5,11 +5,15 @@
 #include "global.c"
 #include "export.c"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
 // Global shader variables
 GLuint vao, vbo;
 GLuint fbo;
 GLuint shaderProgram, viewportShaderProgram;
 GLuint renderTexture;
+GLuint texture;
 GLint success = GL_FALSE;
 
 // Vertex quad
@@ -156,6 +160,22 @@ int setShaders() {
 	return 1;
 }
 
+int loadTexture() {
+	glGenTextures(1, &texture);
+	stbi_set_flip_vertically_on_load(1);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	int textureWidth, textureHeight, textureChannels;
+	unsigned char* textureData = stbi_load(texturePath, &textureWidth, &textureHeight, &textureChannels, 0);
+	if (!textureData) {
+		warning("Error loading texture");
+		return 0;
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(textureData);
+	return 1;
+}
+
 // Initialize GL
 int initGL() {
 
@@ -235,6 +255,7 @@ void renderGL(){
 		glUniform1f(highsLoc, highs);
 		int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 		glUniform2f(renderResLoc, renderWidth, renderHeight);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		lastRenderedTime = currentTime;
 	}

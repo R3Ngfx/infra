@@ -9,7 +9,7 @@
 #define gap 20
 
 int currentTab = 0;
-char* names[] = {"INFO", "SHADER", "AUDIO", "RENDER"};
+char* names[] = {"INFO", "SHADER", "TEXTURE", "AUDIO", "RENDER"};
 
 // Loads selected track
 void loadSelectedTrack(char* path) {
@@ -23,7 +23,13 @@ void loadSelectedShader(char* path) {
 	sprintf(shaderPath, "%s", path);
 	shaderPathLen = strlen(shaderPath);
 	reloadShaders = 1;
+}
 
+// Loads selected texture
+void loadSelectedTexture(char* path) {
+	sprintf(texturePath, "%s", path);
+	texturePathLen = strlen(texturePath);
+	reloadTexture = 1;
 }
 
 // Write directory list for shaders and audio tracks
@@ -90,11 +96,11 @@ void renderUI() {
 
 	if (hideUI) return;
 
-	if (nk_begin(ctx, "CONFIG", nk_rect(viewportWidth-300-gap, gap, 300, 400),
+	if (nk_begin(ctx, "CONFIG", nk_rect(viewportWidth-350-gap, gap, 350, 500),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
-		nk_layout_row_dynamic(ctx, 20, 4);
-		for (int i = 0; i < 4; i++) {
+		nk_layout_row_dynamic(ctx, 20, 5);
+		for (int i = 0; i < 5; i++) {
 			if (currentTab == i) {
 				struct nk_style_item normalButton = ctx->style.button.normal;
 				ctx->style.button.normal = ctx->style.button.active;
@@ -143,6 +149,28 @@ void renderUI() {
 				break;
 			case 2:
 				nk_layout_row_dynamic(ctx, 400, 1);
+				if (nk_group_begin(ctx, "TEXTURE", 0)) {
+
+					float ratio[] = {0.8, 0.2f};
+					nk_layout_row_dynamic(ctx, 10, 1);
+					nk_label(ctx, "File Path:", NK_TEXT_ALIGN_LEFT);
+					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, texturePath, &texturePathLen, 256, nk_filter_default);
+					if (nk_button_label(ctx, "Load")) {
+						// Load shader
+						texturePath[texturePathLen] = '\0';
+						reloadTexture = 1;
+					}
+
+					tinydir_file file;
+					tinydir_file_open(&file, "data/textures");
+					writeDirectoryList(file, loadSelectedTexture);
+
+					nk_group_end(ctx);
+				}
+				break;
+			case 3:
+				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "AUDIO", 0)) {
 
 					float ratio[] = {0.8, 0.2f};
@@ -171,7 +199,7 @@ void renderUI() {
 					nk_group_end(ctx);
 				}
 				break;
-			case 3:
+			case 4:
 				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "RENDER", 0)) {
 

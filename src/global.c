@@ -28,7 +28,7 @@
 #define MAX_VERTEX_MEMORY 512 * 1024
 #define MAX_ELEMENT_MEMORY 128 * 1024
 
-#define pi 3.14159265358979323846
+//#define pi 3.14159265358979323846
 #define eps 0.000001
 
 // Rendering variables
@@ -48,6 +48,8 @@ struct nk_context *ctx;
 // Application behaviour variables
 unsigned char playing = 0;
 unsigned char reloadShaders = 0;
+unsigned char reloadTrack = 0;
+unsigned char reloadTexture = 0;
 unsigned char hideUI = 0;
 unsigned char saveFrame = 0;
 unsigned char startVideo = 0;
@@ -71,6 +73,8 @@ char videoPath[256] = "out/video.mp4";
 int videoPathLen = 13;
 char shaderPath[4096] = "data/shaders/shader.frag";
 int shaderPathLen = 24;
+char texturePath[4096] = "data/textures/fbm.png";
+int texturePathLen = 21;
 
 // Audio variables
 char trackPath[4096] = "";
@@ -81,7 +85,6 @@ unsigned char* trackBuffer;
 float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
-char reloadTrack = 0;
 float lows = 0, mids = 0, highs = 0;
 float maxLows = eps, maxMids = eps, maxHighs = eps;
 float normalizedLows = 0, normalizedMids = 0, normalizedHighs = 0;

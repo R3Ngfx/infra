@@ -101,7 +101,7 @@ void unloadTrack() {
 void initAudio() {
 	// Precalculate Hann window
 	for (int n = 0; n < BUFFER_SIZE; n++) {
-		float r = sin(pi*n/(float)BUFFER_SIZE);
+		float r = sin(3.14159265358979323846*n/(float)BUFFER_SIZE);
 		hann[n] = r*r;
 	}
 	outputBuffer = (fftwf_complex*)fftwf_malloc(sizeof(fftw_complex)*((FFT_SIZE)));

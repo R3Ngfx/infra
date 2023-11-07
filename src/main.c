@@ -132,6 +132,10 @@ int main() {
 			setShaders();
 			reloadShaders = 0;
 		}
+		if (reloadTexture) {
+			loadTexture();
+			reloadTexture = 0;
+		}
 		if (reloadTrack) {
 			loadTrack(trackPath);
 			reloadTrack = 0;

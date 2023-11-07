@@ -28,6 +28,7 @@ External dependencies must be installed separately.
 - [Miniaudio](https://miniaud.io/) *(MIT License)*
 - [Nuklear](https://github.com/Immediate-Mode-UI/Nuklear) *(MIT License)*
 - [TinyDir](https://github.com/cxong/tinydir) *(Modified BSD License)*
+- [stb](https://github.com/nothings/stb) *(MIT License)*
 
 ### External
 - [SDL2](https://www.libsdl.org/) *(Zlib License)*
