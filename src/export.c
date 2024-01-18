@@ -332,10 +332,10 @@ void encodeVideoFrame() {
 void exportFrame() {
 	renderPixels = malloc(3*renderHeight*renderWidth*sizeof(unsigned char));
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glReadPixels(0, 0, renderWidth, renderHeight, GL_BGR, GL_UNSIGNED_BYTE, renderPixels);
+	glReadPixels(0, 0, renderWidth, renderHeight, GL_RGB, GL_UNSIGNED_BYTE, renderPixels);
 	SDL_Surface* saveSurf = SDL_CreateRGBSurfaceFrom(renderPixels, renderWidth, renderHeight, 24, 3*renderWidth, 0, 0, 0, 0);
-	SDL_SaveBMP(saveSurf, framePath);
 	stbi_write_png((const char*)framePath, renderWidth, renderHeight, 3, saveSurf->pixels, sizeof(unsigned char)*renderWidth*3);
+	SDL_FreeSurface(saveSurf);
 	free(renderPixels);
 	printf("Saved frame\n");
 	saveFrame = 0;

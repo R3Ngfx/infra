@@ -101,6 +101,7 @@ void warning(const char* msg) {
 	printf("WARNING: %s\n", msg);
 	sprintf(warningMsg[warningCount], "%s", msg);
 	warningCount++;
+	hideUI = 0;
 }
 
 // Set error message
@@ -108,6 +109,7 @@ void error(char* msg) {
 	printf("ERROR: %s\n", msg);
 	sprintf(errorMsg, "%s", msg);
 	errorCount = 1;
+	hideUI = 0;
 }
 
 // Linear interpolation

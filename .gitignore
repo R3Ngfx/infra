@@ -1,7 +1,5 @@
 bin
 out
-*.bmp
-*.mp4
-*.wav
 data/shaders/private
 data/audio/private
+data/texutres/private

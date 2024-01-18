@@ -69,7 +69,10 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 
 int loadTrack(char* path) {
 	// Load SDL track for rendering
-	SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength);
+	if (SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength) == NULL) {
+		warning("Error loading audio file");
+		return 0;
+	}
 	trackSampleRate = spec.freq;
 	trackChannels = spec.channels;
 	trackDuration = trackLength/trackSampleRate/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);

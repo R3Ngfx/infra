@@ -16,6 +16,8 @@ GLuint renderTexture;
 GLuint texture;
 GLint success = GL_FALSE;
 
+GLint formats[] = {GL_R, GL_RG, GL_RGB, GL_RGBA};
+
 // Vertex quad
 float vertices[] = {
 	-1.0f, -1.0f, 0.0f,
@@ -160,6 +162,7 @@ int setShaders() {
 	return 1;
 }
 
+// Load texture from file
 int loadTexture() {
 	glGenTextures(1, &texture);
 	stbi_set_flip_vertically_on_load(1);
@@ -167,12 +170,16 @@ int loadTexture() {
 	int textureWidth, textureHeight, textureChannels;
 	unsigned char* textureData = stbi_load(texturePath, &textureWidth, &textureHeight, &textureChannels, 0);
 	if (!textureData) {
-		warning("Error loading texture");
+		char msg[4096];
+		sprintf(msg, "Error loading shader with path %s", texturePath);
+		warning(msg);
 		return 0;
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+	GLint format = formats[textureChannels-1];
+	glTexImage2D(GL_TEXTURE_2D, 0, format, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE, textureData);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(textureData);
+	setShaders();
 	return 1;
 }
 

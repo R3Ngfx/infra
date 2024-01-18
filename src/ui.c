@@ -32,7 +32,7 @@ void loadSelectedTexture(char* path) {
 	reloadTexture = 1;
 }
 
-// Write directory list for shaders and audio tracks
+// Write file load directory list
 void writeDirectoryList(tinydir_file file, void (fileFunction)(char*)) {
 	if (file.is_dir) {
 		if (nk_tree_push(ctx, NK_TREE_TAB, file.name, NK_MAXIMIZED)) {
@@ -113,14 +113,33 @@ void renderUI() {
 
 		switch (currentTab) {
 			case 0:
-				nk_layout_row_dynamic(ctx, 200, 1);
+				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "INFO", 0)) {
 
-					nk_layout_row_dynamic(ctx, 10, 1);
-					nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
+					if (nk_tree_push(ctx, NK_TREE_TAB, "KEY BINDINGS", NK_MAXIMIZED)) {
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[SPACE]         Time play/stop", NK_TEXT_ALIGN_LEFT);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[LEFT ARROW]    Time previous frame", NK_TEXT_ALIGN_LEFT);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[RIGHT ARROW]   Time next frame", NK_TEXT_ALIGN_LEFT);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[F5]            Reload shaders", NK_TEXT_ALIGN_LEFT);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[F11]           UI hide/show", NK_TEXT_ALIGN_LEFT);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_label(ctx, "[F12]           Save frame", NK_TEXT_ALIGN_LEFT);
+						nk_tree_pop(ctx);
+					}
 
-					nk_layout_row_dynamic(ctx, 10, 1);
-					nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
+					if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
+
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
+						nk_tree_pop(ctx);
+					}
 
 					nk_group_end(ctx);
 				}
@@ -157,7 +176,7 @@ void renderUI() {
 					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
 					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, texturePath, &texturePathLen, 256, nk_filter_default);
 					if (nk_button_label(ctx, "Load")) {
-						// Load shader
+						// Load texture
 						texturePath[texturePathLen] = '\0';
 						reloadTexture = 1;
 					}
