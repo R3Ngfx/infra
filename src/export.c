@@ -17,6 +17,7 @@
 #include <libavutil/samplefmt.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -43,6 +44,7 @@ struct SwrContext* swrContext;
 
 // Sets video encoder depending on the codec format
 int initVideoStream() {
+	if (format->video_codec == AV_CODEC_ID_NONE) return 0;
 	// Allocate context
 	videoCodec = avcodec_find_encoder(format->video_codec);
 	if (!(videoCodec)) {
@@ -105,6 +107,7 @@ int initVideoStream() {
 
 // Sets audio encoder depending on the codec format
 int initAudioStream() {
+	if (format->audio_codec == AV_CODEC_ID_NONE) return 0;
 	// Allocate context
 	audioCodec = avcodec_find_encoder(format->audio_codec);
 	if (!(audioCodec)) {
@@ -162,11 +165,10 @@ int initAudioStream() {
 		warning("Error allocationg audio temporary frame");
 		return 0;
 	}
-	audioStream.tempFrame->format = audioStream.codecContext->sample_fmt;
+	audioStream.tempFrame->format = AV_SAMPLE_FMT_S16;
 	av_channel_layout_copy(&audioStream.tempFrame->ch_layout, &audioStream.codecContext->ch_layout);
 	audioStream.tempFrame->sample_rate = audioStream.codecContext->sample_rate;
 	audioStream.tempFrame->nb_samples = audioStream.codecContext->frame_size;
-	audioStream.tempFrame->pts = -audioStream.tempFrame->nb_samples;
 	if (audioStream.tempFrame->nb_samples && (av_frame_get_buffer(audioStream.tempFrame, 0) < 0)) {
 		warning("Error allocating audio temporary buffer");
 		return 0;
@@ -187,7 +189,7 @@ int initAudioStream() {
 	av_opt_set_sample_fmt(swrContext, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 	av_opt_set_chlayout(swrContext, "out_chlayout", &audioStream.codecContext->ch_layout, 0);
 	av_opt_set_int(swrContext, "out_sample_rate", audioStream.codecContext->sample_rate, 0);
-	av_opt_set_sample_fmt(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+	av_opt_set_sample_fmt(swrContext, "out_sample_fmt", audioStream.frame->format, 0);
 	if (swr_init(swrContext) < 0) {
 		warning("Error initializing audio resampler");
 		return 0;
@@ -204,10 +206,8 @@ int initVideoExport() {
 	}
 	format = outputContext->oformat;
 	// Add audio and video streams and initialize codecs
-	if (format->video_codec != AV_CODEC_ID_NONE) {
-		if (!initVideoStream()) return 0;
-		if (!initAudioStream()) return 0;
-	}
+	initVideoStream();
+	initAudioStream();
 	// Write format and header to file
 	av_dump_format(outputContext, 0, videoPath, AVIO_FLAG_WRITE);
 	if (!(format->flags & AVFMT_NOFILE)) {
@@ -292,12 +292,12 @@ void encodeVideoFrame() {
 		}
 	} else {
 		// Encode audio
-		int16_t* a = (int16_t*)audioStream.tempFrame->data[0];
+		av_samples_alloc(audioStream.tempFrame->data, NULL, audioStream.codecContext->ch_layout.nb_channels, audioStream.tempFrame->nb_samples, audioStream.tempFrame->format, 0);
+		int16_t* data = (int16_t*)audioStream.tempFrame->data[0];
 		for (int j = 0; j < audioStream.tempFrame->nb_samples; j++) {
 			for (int i = 0; i < audioStream.codecContext->ch_layout.nb_channels; i++) {
-				int v = getTrackSample(audioStream.codecContext->ch_layout.nb_channels*currentAudioSample, i);
-				v = 0;
-				*a++ = v; // I'm sorry for this crime, it's how they do it in the samples
+				int16_t v = getTrackSample(currentAudioSample, i);
+				data[j*audioStream.codecContext->ch_layout.nb_channels+i] = v;
 			}
 			currentAudioSample++;
 			audioStream.tempFrame->pts += audioStream.tempFrame->nb_samples;

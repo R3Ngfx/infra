@@ -74,6 +74,7 @@ int loadTrack(char* path) {
 		return 0;
 	}
 	trackSampleRate = spec.freq;
+	outputSampleRate = trackSampleRate;
 	trackChannels = spec.channels;
 	trackDuration = trackLength/trackSampleRate/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8);
 	// Load miniaudio track for playback

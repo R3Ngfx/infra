@@ -81,7 +81,7 @@ char trackPath[4096] = "";
 int trackPathLen = 0;
 SDL_AudioSpec spec;
 unsigned int trackLength = 0;
-unsigned char* trackBuffer;
+int16_t* trackBuffer;
 float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
@@ -137,9 +137,7 @@ int16_t getTrackSample(int sample, int channel) {
 		return 0;
 	}
 	//printf("Indexing at %i of %i\n", sample*trackChannels+channel, trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8));
-	return ((int16_t*)trackBuffer)[sample*trackChannels+channel];
+	return trackBuffer[sample*trackChannels+channel];
 }
-
-
 
 #endif

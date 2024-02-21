@@ -21,10 +21,6 @@ You can find examples of working shaders under the `data` directory.
 
 > *Note:* Infra's screen space coordinates are centered on the top left corner of the screen. Shaders ported from other programs might appear upside down, this can be fixed by flipping the y axis at the start of the shader `uv.y = 1-uv.y`.
 
-## Current limitations
-* Only WAV files with 16 bits per sample are supported.
-* Video export does not include audio.
-
 ## Dependencies
 Included dependencies are located in the `src` directory.  
 External dependencies must be installed separately.
