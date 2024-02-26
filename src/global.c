@@ -86,6 +86,7 @@ float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
 float lows = 0, mids = 0, highs = 0;
+float lowsInc = 0, midsInc = 0, highsInc = 0;
 float maxLows = eps, maxMids = eps, maxHighs = eps;
 float normalizedLows = 0, normalizedMids = 0, normalizedHighs = 0;
 float smoothness = 6, power = 1, drop = 0;

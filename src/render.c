@@ -254,12 +254,10 @@ void renderGL(){
 		glUseProgram(shaderProgram);
 		int timeLoc = glGetUniformLocation(shaderProgram, "time");
 		glUniform1f(timeLoc, currentTime);
-		int lowsLoc = glGetUniformLocation(shaderProgram, "lows");
-		glUniform1f(lowsLoc, lows);
-		int midsLoc = glGetUniformLocation(shaderProgram, "mids");
-		glUniform1f(midsLoc, mids);
-		int highsLoc = glGetUniformLocation(shaderProgram, "highs");
-		glUniform1f(highsLoc, highs);
+		int audioLoc = glGetUniformLocation(shaderProgram, "audio");
+		glUniform4f(audioLoc, lows, mids, highs, lows+mids+highs);
+		int audioAccLoc = glGetUniformLocation(shaderProgram, "audioInc");
+		glUniform4f(audioAccLoc, lowsInc, midsInc, highsInc, lowsInc+midsInc+highsInc);
 		int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 		glUniform2f(renderResLoc, renderWidth, renderHeight);
 		glBindTexture(GL_TEXTURE_2D, texture);

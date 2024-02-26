@@ -1,17 +1,14 @@
 #version 330 core
 uniform float time;
-uniform float lows;
-uniform float mids;
-uniform float highs;
+uniform vec4 audio;
+uniform vec4 audioInc;
 uniform vec2 resolution;
+uniform sampler2D tex;
 layout(location = 0) out vec4 outCol;
 
 #define pi 3.14159
 #define oz vec2(1,0)
-#define tn 10.0
 #define t vec2(20)
-#define sat(x) clamp(x, 0.0, 1.0)
-#define rot(a) mat2x2(cos(a), -sin(a), sin(a), cos(a))
 
 // Random normalized vector
 vec2 randVec(vec2 p) {
@@ -26,12 +23,11 @@ float perlin(vec2 p) {
 	vec2 f = fract(p);
 	vec2 s = smoothstep(0.0, 1.0, f);
 	vec2 i = floor(p);
-	// Apply mod() to vertex position to make it tileable
+	// Apply mod to vertex position to make it tileable
 	float a = dot(randVec(mod(i,t)), f);
 	float b = dot(randVec(mod(i+oz.xy,t)), f-oz.xy);
 	float c = dot(randVec(mod(i+oz.yx,t)), f-oz.yx);
 	float d = dot(randVec(mod(i+oz.xx,t)), f-oz.xx);
-	
 	return mix(mix(a, b, s.x), mix(c, d, s.x), s.y);
 }
 
@@ -52,7 +48,7 @@ void main(void) {
 	uv.y = 1.-uv.y;
 	uv -= resolution.xy/resolution.y/2.0;
 	//uv += vec2(0.4, -0.2);
-	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01 *time);
+	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01*audioInc.w);
 	float hl = (1.0-length(uv));
 	hl *= hl * hl;
 	outCol = vec4(pow(0.9+0.5*fbm(t*cuv), 10.0)+hl);

@@ -52,7 +52,6 @@ void updateFFT(float* inputBuffer) {
 	maxLows = max(currentLows, maxLows);
 	maxMids = max(currentMids, maxMids);
 	maxHighs = max(currentHighs, maxHighs);
-	// Check division by 0 to avoid NaNs
 	if (maxLows > 0) normalizedLows = currentLows/maxLows;
 	if (maxMids > 0) normalizedMids = currentMids/maxMids;
 	if (maxHighs > 0) normalizedHighs = currentHighs/maxHighs;
@@ -150,12 +149,18 @@ void renderAudio() {
 	}
 	// Update fft with new input buffer
 	updateFFT(audioBuffer);
+	float currentLows = pow(normalizedLows, power);
+	float currentMids = pow(normalizedMids, power);
+	float currentHighs = pow(normalizedHighs, power);
 	// Drop max values with clamping
 	maxLows = max(maxLows-deltaTime*drop, 0);
 	maxMids = max(maxMids-deltaTime*drop, 0);
 	maxHighs = max(maxHighs-deltaTime*drop, 0);
 	// Assign final smoothed values
-	lows = lerp(lows, pow(normalizedLows, power), deltaTime*smoothness);
-	mids = lerp(mids, pow(normalizedMids, power), deltaTime*smoothness);
-	highs = lerp(highs, pow(normalizedHighs, power), deltaTime*smoothness);
+	lows = lerp(lows, currentLows, deltaTime*smoothness);
+	mids = lerp(mids, currentMids, deltaTime*smoothness);
+	highs = lerp(highs, currentHighs, deltaTime*smoothness);
+	lowsInc += 0.1*currentLows;
+	midsInc += 0.1*currentMids;
+	highsInc += 0.1*currentHighs;
 }
