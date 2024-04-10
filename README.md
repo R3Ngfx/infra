@@ -5,24 +5,24 @@ Infra is a tool for creating textures and videos by exporting the output of GLSL
 
 ## Usage
 With Infra you can load and visualize fragment shaders, adjust the export parameters and render video sequences or individual frames.
-Infra can be used for creating images, animations and even audio visualizers and music videos with a single fragment shader.
+Infra can be used to create images, animations and even audio visualizers and music videos with a single fragment shader.
 Check the *INFO* tab in the application for more details about its usage.
 
 ### Shader syntax
-Infra uses GLSL shaders. Six different variables are exposed and can be used in the shader:
+Infra uses GLSL shaders. Five different variables are exposed and can be used in the shader:
 - `time` *(float)*: Current time in seconds.
 - `resolution` *(vec2)*: Horizontal and vertical resolution of the rendered image.
-- `audio` *(vec4)*: Value of audio visualization
-    - `audio.x`: Low frequencies (20Hz-250Hz)
-    - `audio.y`: Mid frequencies (250Hz-2000Hz)
-    - `audio.z`: High frequencies (2000Hz-20000Hz)
-    - `audio.w`: All
-- `audioInc` *(vec4)*: Incremental value of audio visualization
-    - `audioInc.x`: Low frequencies (20Hz-250Hz)
-    - `audioInc.y`: Mid frequencies (250Hz-2000Hz)
-    - `audioInc.z`: High frequencies (2000Hz-20000Hz)
-    - `audioInc.w`: All
-- `tex` *(sampler2D)*: Custom image texture loaded.
+- `audio` *(vec4)*: Value of audio visualization.
+    - `audio.x`: Low frequencies (20Hz-250Hz).
+    - `audio.y`: Mid frequencies (250Hz-2000Hz).
+    - `audio.z`: High frequencies (2000Hz-20000Hz).
+    - `audio.w`: All.
+- `audioInc` *(vec4)*: Incremental value of audio visualization.
+    - `audioInc.x`: Low frequencies (20Hz-250Hz).
+    - `audioInc.y`: Mid frequencies (250Hz-2000Hz).
+    - `audioInc.z`: High frequencies (2000Hz-20000Hz).
+    - `audioInc.w`: All.
+- `tex` *(sampler2D)*: Custom image texture.
 
 You can find examples of working shaders under the `data` directory.
 

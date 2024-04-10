@@ -48,7 +48,7 @@ void main(void) {
 	uv.y = 1.-uv.y;
 	uv -= resolution.xy/resolution.y/2.0;
 	//uv += vec2(0.4, -0.2);
-	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01*audioInc.w);
+	vec2 cuv = vec2((atan(uv.x, uv.y)+pi)/(2.0*pi), 0.005/length(uv)+0.01*time);
 	float hl = (1.0-length(uv));
 	hl *= hl * hl;
 	outCol = vec4(pow(0.9+0.5*fbm(t*cuv), 10.0)+hl);

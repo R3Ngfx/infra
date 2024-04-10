@@ -273,6 +273,37 @@ int encode(struct OutputStream outputStream) {
 	return 1;
 }
 
+int flush(struct OutputStream outputStream) {
+	int ret = 0;
+	if ((ret = avcodec_send_frame(outputStream.codecContext, NULL)) < 0) {
+		char msg[4096];
+		sprintf(msg, "Error sending frame for encoding during flush (%s)", av_err2str(ret));
+		warning(msg);
+		return 0;
+	}
+	while (ret >= 0) {
+		ret = avcodec_receive_packet(outputStream.codecContext, outputStream.packet);
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+			return 1;
+		} else if (ret < 0) {
+			char msg[4096];
+			sprintf(msg, "Error during encoding during flush (%s)\n", av_err2str(ret));
+			warning(msg);
+			return 0;
+		}
+		av_packet_rescale_ts(outputStream.packet, outputStream.codecContext->time_base, outputStream.stream->time_base);
+		outputStream.packet->stream_index = outputStream.stream->index;
+		ret = av_interleaved_write_frame(outputContext, outputStream.packet);
+		if (ret < 0) {
+			char msg[4096];
+			sprintf(msg, "Error while writing output packet during flush (%s)\n", av_err2str(ret));
+			warning(msg);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 void encodeVideoFrame() {
 	if (av_compare_ts(currentVideoFrame, videoStream.codecContext->time_base,
 	currentAudioSample, audioStream.codecContext->time_base) <= 0) {
@@ -321,6 +352,10 @@ void encodeVideoFrame() {
 		}
 	}
 	if (currentVideoFrame >= maxVideoFrames) {
+		// Flush frames in queue
+		flush(videoStream);
+		flush(audioStream);
+		// Save video
 		av_write_trailer(outputContext);
 		uninitVideoExport();
 		saveVideo = 0;
