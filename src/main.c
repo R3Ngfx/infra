@@ -55,7 +55,7 @@ int main() {
 				currentTime = currentTimeSelect/100.0f * renderVideoLength;
 				prevTimeSelect = currentTimeSelect;
 				seekAudio();
-				renderAudio(1);
+				renderAudio();
 			} else {
 				currentTimeSelect = 100*currentTime/renderVideoLength;
 				currentTimeSelect = currentTimeSelect > 100 ? 100 : currentTimeSelect;
@@ -102,10 +102,6 @@ int main() {
 						}
 						case SDLK_F11: {
 							hideUI = !hideUI;
-							break;
-						}
-						case SDLK_F12: {
-							saveFrame = 1;
 							break;
 						}
 					}

@@ -73,8 +73,10 @@ char videoPath[256] = "out/video.mp4";
 int videoPathLen = 13;
 char shaderPath[4096] = "data/shaders/shader.frag";
 int shaderPathLen = 24;
-char texturePath[4096] = "data/textures/fbm.png";
-int texturePathLen = 21;
+char texturePath[4096];
+int texturePathLen;
+char texturePaths[16][4096];
+int loadedTextures = 0;
 
 // Audio variables
 char trackPath[4096] = "";

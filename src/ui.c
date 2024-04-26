@@ -27,8 +27,10 @@ void loadSelectedShader(char* path) {
 
 // Loads selected texture
 void loadSelectedTexture(char* path) {
+	sprintf(texturePaths[loadedTextures], "%s", path);
 	sprintf(texturePath, "%s", path);
 	texturePathLen = strlen(texturePath);
+	loadedTextures++;
 	reloadTexture = 1;
 }
 
@@ -127,8 +129,6 @@ void renderUI() {
 						nk_label(ctx, "[F5]            Reload shaders", NK_TEXT_ALIGN_LEFT);
 						nk_layout_row_dynamic(ctx, 10, 1);
 						nk_label(ctx, "[F11]           UI hide/show", NK_TEXT_ALIGN_LEFT);
-						nk_layout_row_dynamic(ctx, 10, 1);
-						nk_label(ctx, "[F12]           Save frame", NK_TEXT_ALIGN_LEFT);
 						nk_tree_pop(ctx);
 					}
 
@@ -170,6 +170,45 @@ void renderUI() {
 				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "TEXTURE", 0)) {
 
+
+					nk_layout_row_dynamic(ctx, 20, 1);
+					nk_label(ctx, "LOADED:", NK_TEXT_LEFT);
+					for (int i = 0; i < loadedTextures; i++) {
+						float ratio[5] = {0.125, 0.65, 0.075, 0.075, 0.075};
+						nk_layout_row(ctx, NK_DYNAMIC, 20, 5, ratio);
+						char texName[8];
+						sprintf(texName, "tex%i: ", i);
+						nk_label(ctx, texName, NK_TEXT_ALIGN_LEFT);
+						nk_label(ctx, texturePaths[i], NK_TEXT_ALIGN_RIGHT);
+						if (nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_UP)) {
+							if (i == 0) break;
+							char tempName[4096];
+							sprintf(tempName, "%s", texturePaths[i-1]);
+							sprintf(texturePaths[i-1], "%s", texturePaths[i]);
+							sprintf(texturePaths[i], "%s", tempName);
+							reloadTexture = 1;
+						}
+						if (nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_DOWN)) {
+							if (i >= loadedTextures-1) break;
+							char tempName[4096];
+							sprintf(tempName, "%s", texturePaths[i+1]);
+							sprintf(texturePaths[i+1], "%s", texturePaths[i]);
+							sprintf(texturePaths[i], "%s", tempName);
+							reloadTexture = 1;
+						}
+						if (nk_button_symbol(ctx, NK_SYMBOL_X)) {
+							loadedTextures--;
+							for (int i = 0; i < loadedTextures; i++) {
+								sprintf(texturePaths[i], "%s", texturePaths[i+1]);
+							}
+							reloadTexture = 1;
+						}
+					}
+
+					nk_layout_row_dynamic(ctx, 10, 1);
+					nk_layout_row_dynamic(ctx, 20, 1);
+					nk_label(ctx, "LOAD:", NK_TEXT_LEFT);
+
 					float ratio[] = {0.8, 0.2f};
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "File Path:", NK_TEXT_ALIGN_LEFT);
@@ -177,8 +216,8 @@ void renderUI() {
 					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, texturePath, &texturePathLen, 256, nk_filter_default);
 					if (nk_button_label(ctx, "Load")) {
 						// Load texture
-						texturePath[texturePathLen] = '\0';
-						reloadTexture = 1;
+						texturePath[texturePathLen] ='\0';
+						loadSelectedTexture(texturePath);
 					}
 
 					tinydir_file file;
@@ -207,8 +246,9 @@ void renderUI() {
 					tinydir_file_open(&file, "data/audio");
 					writeDirectoryList(file, loadSelectedTrack);
 
-					nk_layout_row_dynamic(ctx, 10, 2);
-					nk_label(ctx, "Visualization:", NK_TEXT_ALIGN_LEFT);
+					nk_layout_row_dynamic(ctx, 10, 0);
+					nk_layout_row_dynamic(ctx, 20, 2);
+					nk_label(ctx, "VISUALIZATION:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_property_float(ctx, "Smoothness", 0, &smoothness, frameRate, 0.1, 0.1);
 					nk_layout_row_dynamic(ctx, 30, 1);
@@ -243,23 +283,14 @@ void renderUI() {
 					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_property_float(ctx, "Seconds:", 0, &renderVideoLength, 3600, 1, 0.1);
 
-					float ratio[] = {0.8, 0.2f};
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "Frame export path:", NK_TEXT_ALIGN_LEFT);
-					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, framePath, &framePathLen, 256, nk_filter_default);
-					if (nk_button_label(ctx, "Update")) {
-						framePath[framePathLen] = '\0';
-					}
-
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "Video export path:", NK_TEXT_ALIGN_LEFT);
-					nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratio);
+					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_SELECTABLE | NK_EDIT_CLIPBOARD, videoPath, &videoPathLen, 256, nk_filter_default);
-					if (nk_button_label(ctx, "Update")) {
-						videoPath[videoPathLen] = '\0';
-					}
-
 					nk_group_end(ctx);
 				}
 				break;
@@ -275,8 +306,14 @@ void renderUI() {
 		float ratio[] = {0.8, 0.1, 0.1};
 		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratio);
 		nk_label(ctx, "TIMELINE", NK_TEXT_ALIGN_LEFT);
-		if (nk_button_label(ctx, "Save Frame")) saveFrame = 1;
-		if (nk_button_label(ctx, "Save Video")) startVideo = 1;
+		if (nk_button_label(ctx, "Save Frame")) {
+			framePath[framePathLen] = '\0';
+			saveFrame = 1;
+		}
+		if (nk_button_label(ctx, "Save Video")) {
+			videoPath[videoPathLen] = '\0';
+			startVideo = 1;
+		}
 		nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
 		nk_layout_row_push(ctx, 20);
 		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {

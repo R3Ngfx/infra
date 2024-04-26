@@ -13,7 +13,7 @@ GLuint vao, vbo;
 GLuint fbo;
 GLuint shaderProgram, viewportShaderProgram;
 GLuint renderTexture;
-GLuint texture;
+GLuint textures[16];
 GLint success = GL_FALSE;
 
 GLint formats[] = {GL_R, GL_RG, GL_RGB, GL_RGBA};
@@ -94,6 +94,7 @@ int setFBO() {
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glGenTextures(1, &renderTexture);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, renderWidth, renderHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -164,21 +165,28 @@ int setShaders() {
 
 // Load texture from file
 int loadTexture() {
-	glGenTextures(1, &texture);
+	glDeleteTextures(loadedTextures, textures);
+	glGenTextures(loadedTextures, textures);
 	stbi_set_flip_vertically_on_load(1);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	int textureWidth, textureHeight, textureChannels;
-	unsigned char* textureData = stbi_load(texturePath, &textureWidth, &textureHeight, &textureChannels, 0);
-	if (!textureData) {
-		char msg[4096];
-		sprintf(msg, "Error loading shader with path %s", texturePath);
-		warning(msg);
-		return 0;
+	for (int i = 0; i < loadedTextures; i++) {
+		glActiveTexture(GL_TEXTURE1 + i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+		int textureWidth, textureHeight, textureChannels;
+		unsigned char* textureData = stbi_load(texturePaths[i], &textureWidth, &textureHeight, &textureChannels, 0);
+		if (!textureData) {
+			char msg[4096];
+			sprintf(msg, "Error loading texture with path %s", texturePaths[i]);
+			warning(msg);
+			return 0;
+		}
+		GLint format = formats[textureChannels-1];
+		glTexImage2D(GL_TEXTURE_2D, 0, format, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE, textureData);
+		// TODO: Parametrize filter mode
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(textureData);
 	}
-	GLint format = formats[textureChannels-1];
-	glTexImage2D(GL_TEXTURE_2D, 0, format, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE, textureData);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(textureData);
 	setShaders();
 	return 1;
 }
@@ -260,7 +268,13 @@ void renderGL(){
 		glUniform4f(audioAccLoc, lowsInc, midsInc, highsInc, lowsInc+midsInc+highsInc);
 		int renderResLoc = glGetUniformLocation(shaderProgram, "resolution");
 		glUniform2f(renderResLoc, renderWidth, renderHeight);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		for (int i = 0; i < loadedTextures; i++) {
+			char textureName[8];
+			sprintf(textureName, "tex%i", i);
+			glUniform1i(glGetUniformLocation(shaderProgram, textureName), i);
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, textures[i]);
+		}
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		lastRenderedTime = currentTime;
 	}
@@ -287,6 +301,8 @@ void renderGL(){
 	glUseProgram(viewportShaderProgram);
 	int viewportResLoc = glGetUniformLocation(viewportShaderProgram, "resolution");
 	glUniform2f(viewportResLoc, viewportWidth, viewportHeight);
+	glUniform1i(glGetUniformLocation(viewportShaderProgram, "renderedTexture"), 0);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 

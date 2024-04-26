@@ -45,5 +45,5 @@ External dependencies must be installed separately.
 - [LIBAV](https://libav.org/) *(GPLv2)*
 
 ## License
-GNU General Public License Version 2.  
-Read the full [license](LICENSE)
+Source code for Infra is provided under the [GNU General Public License Version 2](LICENSE)).  
+Original shaders are provided under the [Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/) license.
