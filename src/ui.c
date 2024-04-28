@@ -27,6 +27,7 @@ void loadSelectedShader(char* path) {
 
 // Loads selected texture
 void loadSelectedTexture(char* path) {
+	if (loadedTextures >= 16) return;
 	sprintf(texturePaths[loadedTextures], "%s", path);
 	sprintf(texturePath, "%s", path);
 	texturePathLen = strlen(texturePath);

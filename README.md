@@ -22,7 +22,11 @@ Infra uses GLSL shaders. Five different variables are exposed and can be used in
     - `audioInc.y`: Mid frequencies (250Hz-2000Hz).
     - `audioInc.z`: High frequencies (2000Hz-20000Hz).
     - `audioInc.w`: All.
-- `tex` *(sampler2D)*: Custom image texture.
+- `tex<NUM>` *(sampler2D)*: Up to 16 texture images can be loaded, with `<NUM>` being the number of the image.
+    - `tex0`: First image
+    - `tex1`: Second image
+    - ...
+    - `tex15`: Sixteenth image
 
 You can find examples of working shaders under the `data` directory.
 
@@ -45,5 +49,5 @@ External dependencies must be installed separately.
 - [LIBAV](https://libav.org/) *(GPLv2)*
 
 ## License
-Source code for Infra is provided under the [GNU General Public License Version 2](LICENSE)).  
+Source code for Infra is provided under the [GNU General Public License Version 2](LICENSE).  
 Original shaders are provided under the [Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/) license.
