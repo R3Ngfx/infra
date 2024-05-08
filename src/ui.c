@@ -171,9 +171,10 @@ void renderUI() {
 				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "TEXTURE", 0)) {
 
-
 					nk_layout_row_dynamic(ctx, 20, 1);
 					nk_label(ctx, "LOADED:", NK_TEXT_LEFT);
+					nk_layout_row_dynamic(ctx, 1, 1);
+					nk_rule_horizontal(ctx, nk_white, nk_true);
 					for (int i = 0; i < loadedTextures; i++) {
 						float ratio[5] = {0.125, 0.65, 0.075, 0.075, 0.075};
 						nk_layout_row(ctx, NK_DYNAMIC, 20, 5, ratio);
@@ -326,7 +327,11 @@ void renderUI() {
 		nk_layout_row_push(ctx, 30);
 		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
 		nk_layout_row_push(ctx, viewportWidth-2*gap-50-20);
-		nk_progress(ctx, &currentTimeSelect, 100, NK_MODIFIABLE);
+		nk_progress(ctx, &currentTimeSelected, 100, NK_MODIFIABLE);
+		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 100){
+			currentTime = renderVideoLength*currentTimeSelected/100.0f;
+			seekedTime = 1;
+		}
 		nk_layout_row_end(ctx);
 	}
 	nk_end(ctx);

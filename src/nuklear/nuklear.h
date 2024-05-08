@@ -5220,6 +5220,7 @@ struct nk_style_chart {
     struct nk_vec2 padding;
     float color_factor;
     float disabled_factor;
+    nk_bool show_markers;
 };
 
 struct nk_style_combo {
@@ -5410,6 +5411,7 @@ struct nk_chart_slot {
     int count;
     struct nk_vec2 last;
     int index;
+    nk_bool show_markers;
 };
 
 struct nk_chart {
@@ -18678,6 +18680,7 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     chart->rounding         = 0;
     chart->color_factor     = 1.0f;
     chart->disabled_factor  = NK_WIDGET_DISABLED_FACTOR;
+    chart->show_markers     = nk_true;
 
     /* combo */
     combo = &style->combo;
@@ -19667,12 +19670,12 @@ nk_panel_get_border_color(const struct nk_style *style, enum nk_panel_type type)
 NK_LIB nk_bool
 nk_panel_is_sub(enum nk_panel_type type)
 {
-    return (type & NK_PANEL_SET_SUB)?1:0;
+    return ((int)type & (int)NK_PANEL_SET_SUB)?1:0;
 }
 NK_LIB nk_bool
 nk_panel_is_nonblock(enum nk_panel_type type)
 {
-    return (type & NK_PANEL_SET_NONBLOCK)?1:0;
+    return ((int)type & (int)NK_PANEL_SET_NONBLOCK)?1:0;
 }
 NK_LIB nk_bool
 nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type panel_type)
@@ -20922,7 +20925,7 @@ nk_popup_begin(struct nk_context *ctx, enum nk_popup_type type,
 
     win = ctx->current;
     panel = win->layout;
-    NK_ASSERT(!(panel->type & NK_PANEL_SET_POPUP) && "popups are not allowed to have popups");
+    NK_ASSERT(!((int)panel->type & (int)NK_PANEL_SET_POPUP) && "popups are not allowed to have popups");
     (void)panel;
     title_len = (int)nk_strlen(title);
     title_hash = nk_murmur_hash(title, (int)title_len, NK_PANEL_POPUP);
@@ -21016,7 +21019,7 @@ nk_nonblock_begin(struct nk_context *ctx,
     /* popups cannot have popups */
     win = ctx->current;
     panel = win->layout;
-    NK_ASSERT(!(panel->type & NK_PANEL_SET_POPUP));
+    NK_ASSERT(!((int)panel->type & (int)NK_PANEL_SET_POPUP));
     (void)panel;
     popup = win->popup.win;
     if (!popup) {
@@ -21089,7 +21092,7 @@ nk_popup_close(struct nk_context *ctx)
 
     popup = ctx->current;
     NK_ASSERT(popup->parent);
-    NK_ASSERT(popup->layout->type & NK_PANEL_SET_POPUP);
+    NK_ASSERT((int)popup->layout->type & (int)NK_PANEL_SET_POPUP);
     popup->flags |= NK_WINDOW_HIDDEN;
 }
 NK_API void
@@ -21357,7 +21360,7 @@ nk_contextual_end(struct nk_context *ctx)
     popup = ctx->current;
     panel = popup->layout;
     NK_ASSERT(popup->parent);
-    NK_ASSERT(panel->type & NK_PANEL_SET_POPUP);
+    NK_ASSERT((int)panel->type & (int)NK_PANEL_SET_POPUP);
     if (panel->flags & NK_WINDOW_DYNAMIC) {
         /* Close behavior
         This is a bit of a hack solution since we do not know before we end our popup
@@ -28177,7 +28180,9 @@ nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *
 
     /* draw label */
     text.padding = nk_vec2(0,0);
-    nk_widget_text(out, *label, name, len, &text, NK_TEXT_CENTERED, font);
+    if (name && name[0] != '#') {
+        nk_widget_text(out, *label, name, len, &text, NK_TEXT_CENTERED, font);
+    }
 }
 NK_LIB void
 nk_do_property(nk_flags *ws,
@@ -28195,7 +28200,7 @@ nk_do_property(nk_flags *ws,
         nk_filter_float
     };
     nk_bool active, old;
-    int num_len = 0, name_len;
+    int num_len = 0, name_len = 0;
     char string[NK_MAX_NUMBER_BUFFER];
     float size;
 
@@ -28215,7 +28220,9 @@ nk_do_property(nk_flags *ws,
     left.y = property.y + style->border + property.h/2.0f - left.h/2;
 
     /* text label */
-    name_len = nk_strlen(name);
+    if (name && name[0] != '#') {
+        name_len = nk_strlen(name);
+    }
     size = font->width(font->userdata, font->height, name, name_len);
     label.x = left.x + left.w + style->padding.x;
     label.w = (float)size + 2 * style->padding.x;
@@ -28322,7 +28329,7 @@ nk_do_property(nk_flags *ws,
     text_edit->string.buffer.memory.ptr = dst;
     text_edit->string.buffer.size = NK_MAX_NUMBER_BUFFER;
     text_edit->mode = NK_TEXT_EDIT_MODE_INSERT;
-    nk_do_edit(ws, out, edit, NK_EDIT_FIELD|NK_EDIT_AUTO_SELECT,
+    nk_do_edit(ws, out, edit, (int)NK_EDIT_FIELD|(int)NK_EDIT_AUTO_SELECT,
         filters[filter], text_edit, &style->edit, (*state == NK_PROPERTY_EDIT) ? in: 0, font);
 
     *length = text_edit->string.len;
@@ -28629,7 +28636,8 @@ nk_chart_begin_colored(struct nk_context *ctx, enum nk_chart_type type,
     slot->highlight = highlight;
     slot->min = NK_MIN(min_value, max_value);
     slot->max = NK_MAX(min_value, max_value);
-    slot->range = slot->max - slot->min;}
+    slot->range = slot->max - slot->min;
+    slot->show_markers = style->show_markers;}
 
     /* draw chart background */
     background = &style->background;
@@ -28681,7 +28689,8 @@ nk_chart_add_slot_colored(struct nk_context *ctx, const enum nk_chart_type type,
     slot->highlight = highlight;
     slot->min = NK_MIN(min_value, max_value);
     slot->max = NK_MAX(min_value, max_value);
-    slot->range = slot->max - slot->min;}
+    slot->range = slot->max - slot->min;
+    slot->show_markers = style->show_markers;}
 }
 NK_API void
 nk_chart_add_slot(struct nk_context *ctx, const enum nk_chart_type type,
@@ -28728,7 +28737,9 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win,
                 i->mouse.buttons[NK_BUTTON_LEFT].clicked) ? NK_CHART_CLICKED: 0;
             color = g->slots[slot].highlight;
         }
-        nk_fill_rect(out, bounds, 0, color);
+        if (g->slots[slot].show_markers) {
+            nk_fill_rect(out, bounds, 0, color);
+        }
         g->slots[slot].index += 1;
         return ret;
     }
@@ -28752,7 +28763,9 @@ nk_chart_push_line(struct nk_context *ctx, struct nk_window *win,
             color = g->slots[slot].highlight;
         }
     }
-    nk_fill_rect(out, nk_rect(cur.x - 2, cur.y - 2, 4, 4), 0, color);
+    if (g->slots[slot].show_markers) {
+        nk_fill_rect(out, nk_rect(cur.x - 2, cur.y - 2, 4, 4), 0, color);
+    }
 
     /* save current data point position */
     g->slots[slot].last.x = cur.x;
@@ -29982,7 +29995,7 @@ nk_tooltip_begin(struct nk_context *ctx, float width)
     /* make sure that no nonblocking popup is currently active */
     win = ctx->current;
     in = &ctx->input;
-    if (win->popup.win && (win->popup.type & NK_PANEL_SET_NONBLOCK))
+    if (win->popup.win && ((int)win->popup.type & (int)NK_PANEL_SET_NONBLOCK))
         return 0;
 
     w = nk_iceilf(width);
@@ -30123,6 +30136,7 @@ nk_tooltipfv(struct nk_context *ctx, const char *fmt, va_list args)
 ///   - [y]: Minor version with non-breaking API and library changes
 ///   - [z]: Patch version with no direct changes to the API
 ///
+/// - 2024/03/07 (4.12.1) - Fix bitwise operations warnings in C++20
 /// - 2023/11/26 (4.12.0) - Added an alignment option to checkboxes and radio buttons.
 /// - 2023/10/11 (4.11.0) - Added nk_widget_disable_begin() and nk_widget_disable_end()
 /// - 2022/12/23 (4.10.6) - Fix incorrect glyph index in nk_font_bake()

@@ -55,15 +55,16 @@ unsigned char saveFrame = 0;
 unsigned char startVideo = 0;
 unsigned char saveVideo = 0;
 unsigned char changePauseAudio = 0;
+unsigned char seekedTime = 0;
 unsigned char useAudio = 0; // TODO: Implement
 
 // Time variables
-unsigned long currentTimeSelect, prevTimeSelect;
 double currentFrameTime = 0, prevFrameTime = 0, currentTime = 0, deltaTime;
 unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
 unsigned int currentAudioSample = 0;
 float renderVideoLength = 60;
 double lastRenderedTime = -1;
+unsigned long currentTimeSelected = 0, lastTimeSelected = 0;
 
 // Directory variables
 tinydir_dir dataDir;

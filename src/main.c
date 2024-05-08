@@ -43,23 +43,19 @@ int main() {
 			currentFrameTime = (double)currentVideoFrame/frameRate;
 			currentTime = currentFrameTime;
 			deltaTime = 1.0f/frameRate;
-			currentTimeSelect = 100*currentTime/renderVideoLength;
 		} else {
 			prevFrameTime = currentFrameTime;
 			currentFrameTime = SDL_GetTicks()/1000.0;
 			deltaTime = currentFrameTime-prevFrameTime;
-			if (playing) {
-				currentTime += deltaTime;
-			}
-			if (prevTimeSelect != currentTimeSelect) {
-				currentTime = currentTimeSelect/100.0f * renderVideoLength;
-				prevTimeSelect = currentTimeSelect;
+			if (seekedTime) {
+				seekedTime = 0;
 				seekAudio();
 				renderAudio();
-			} else {
-				currentTimeSelect = 100*currentTime/renderVideoLength;
-				currentTimeSelect = currentTimeSelect > 100 ? 100 : currentTimeSelect;
-				prevTimeSelect = currentTimeSelect;
+			}
+			if (playing) {
+				currentTime += deltaTime;
+				currentTimeSelected = (unsigned long)100*min((currentTime/renderVideoLength), 1);
+				lastTimeSelected = currentTimeSelected;
 			}
 		}
 
