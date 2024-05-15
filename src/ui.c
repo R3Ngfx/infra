@@ -35,8 +35,8 @@ void loadSelectedTexture(char* path) {
 	reloadTexture = 1;
 }
 
-// Write file load directory list
-void writeDirectoryList(tinydir_file file, void (fileFunction)(char*)) {
+// Write file load directory list recursively
+void writeDirectoryListRecursive(tinydir_file file, void (fileFunction)(char*)) {
 	if (file.is_dir) {
 		if (nk_tree_push(ctx, NK_TREE_TAB, file.name, NK_MAXIMIZED)) {
 			tinydir_dir subDir;
@@ -45,7 +45,7 @@ void writeDirectoryList(tinydir_file file, void (fileFunction)(char*)) {
 				tinydir_file subFile;
 				tinydir_readfile_n(&subDir, &subFile, i);
 				if (subFile.name[0] == '.') continue;
-				writeDirectoryList(subFile, fileFunction);
+				writeDirectoryListRecursive(subFile, fileFunction);
 			}
 			tinydir_close(&subDir);
 			nk_tree_pop(ctx);
@@ -59,6 +59,43 @@ void writeDirectoryList(tinydir_file file, void (fileFunction)(char*)) {
 		}
 	}
 
+}
+
+void writeDirectoryListIterative(char* filepath, void (fileFunction)(char*)) {
+	tinydir_dir dirStack[512];
+	int readFileStack[512];
+	int currentRead = 0;
+	tinydir_open_sorted(&dirStack[currentRead], filepath);
+	readFileStack[currentRead] = 0;
+	if (!nk_tree_push(ctx, NK_TREE_TAB, dirStack[currentRead].path, NK_MAXIMIZED)) return;
+	int tot = 0;
+	while (currentRead >= 0) {
+readfile:
+		while (readFileStack[currentRead] < dirStack[currentRead].n_files) {
+			tinydir_file file;
+			tinydir_readfile_n(&dirStack[currentRead], &file, readFileStack[currentRead]);
+			readFileStack[currentRead]++;
+			if (file.is_dir) {
+				if (file.name[0] == '.') continue;
+				if (nk_tree_push(ctx, NK_TREE_TAB, file.name, NK_MINIMIZED)) {
+					currentRead++;
+					readFileStack[currentRead] = 0;
+					tinydir_open_sorted(&dirStack[currentRead], file.path);
+					goto readfile;
+				}
+			} else {
+				float ratio[2] = {0.7, 0.3};
+				nk_layout_row(ctx, NK_DYNAMIC, 20, 2, ratio);
+				nk_label(ctx, file.name, NK_TEXT_ALIGN_LEFT);
+				if (nk_button_label(ctx, "Load")) {
+					fileFunction(file.path);
+				}
+			}
+		}
+		tinydir_close(&dirStack[currentRead]);
+		nk_tree_pop(ctx);
+		currentRead--;
+	}
 }
 
 // Nuklear initialization
@@ -76,7 +113,7 @@ void uninitUI() {
 	nk_sdl_shutdown();
 }
 
-// UI componentes and structure
+// UI components and structure
 void renderUI() {
 
 	if (errorCount != 0) {
@@ -119,6 +156,16 @@ void renderUI() {
 				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "INFO", 0)) {
 
+					if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Render Resolution: %ix%i", renderWidth, renderHeight);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
+						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
+						nk_tree_pop(ctx);
+					}
+
 					if (nk_tree_push(ctx, NK_TREE_TAB, "KEY BINDINGS", NK_MAXIMIZED)) {
 						nk_layout_row_dynamic(ctx, 10, 1);
 						nk_label(ctx, "[SPACE]         Time play/stop", NK_TEXT_ALIGN_LEFT);
@@ -133,12 +180,45 @@ void renderUI() {
 						nk_tree_pop(ctx);
 					}
 
-					if (nk_tree_push(ctx, NK_TREE_TAB, "INFO", NK_MAXIMIZED)) {
-						nk_layout_row_dynamic(ctx, 10, 1);
-						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
-
-						nk_layout_row_dynamic(ctx, 10, 1);
-						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
+					if (nk_tree_push(ctx, NK_TREE_TAB, "HOW TO USE", NK_MAXIMIZED)) {
+						if (nk_tree_push(ctx, NK_TREE_NODE, "LOAD SHADERS", NK_MINIMIZED)) {
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "You can load the rendered shader in the [SHADER] tab.");
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "A list is shown of all of the files present in the data directory.");
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "In order to load any file in any other location you can specify the local or global filepath.");
+							nk_tree_pop(ctx);
+						}
+						if (nk_tree_push(ctx, NK_TREE_NODE, "USING TEXTURES", NK_MINIMIZED)) {
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "Up to 16 textures can be loaded in the [TEXTURE] tab.");
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "The textures will be passed to the shader as Sampler2Ds with names from tex0 to tex15.");
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "You can change the order of the loaded textures as well as unloading them.");
+							nk_tree_pop(ctx);
+						}
+						if (nk_tree_push(ctx, NK_TREE_NODE, "AUDIO", NK_MINIMIZED)) {
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "You can include an audio track that will be included in the rendered video sequence.");
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "An audio file can be loaded in the [AUDIO] tab.");
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "You can perform audio visualization effects in the shaders by reading the audio vec4 uniform.");
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "The behavior of the audio detection can be configured by modifying the smoothness, power and drop variables.");
+							nk_tree_pop(ctx);
+						}
+						if (nk_tree_push(ctx, NK_TREE_NODE, "EXPORTING", NK_MINIMIZED)) {
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "You can configure the rendering setings in the [RENDER] tab.");
+							nk_layout_row_dynamic(ctx, 50, 1);
+							nk_label_wrap(ctx, "A video sequence can be exported by pressing [Save Video] in the timeline window below.");
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "A single image of the current frame can be exported by pressing [Save Frame].");
+							nk_tree_pop(ctx);
+						}
 						nk_tree_pop(ctx);
 					}
 
@@ -162,7 +242,8 @@ void renderUI() {
 
 					tinydir_file file;
 					tinydir_file_open(&file, "data/shaders");
-					writeDirectoryList(file, loadSelectedShader);
+					//writeDirectoryListRecursive(file, loadSelectedShader);
+					writeDirectoryListIterative("data/shaders", loadSelectedShader);
 
 					nk_group_end(ctx);
 				}
@@ -173,8 +254,6 @@ void renderUI() {
 
 					nk_layout_row_dynamic(ctx, 20, 1);
 					nk_label(ctx, "LOADED:", NK_TEXT_LEFT);
-					nk_layout_row_dynamic(ctx, 1, 1);
-					nk_rule_horizontal(ctx, nk_white, nk_true);
 					for (int i = 0; i < loadedTextures; i++) {
 						float ratio[5] = {0.125, 0.65, 0.075, 0.075, 0.075};
 						nk_layout_row(ctx, NK_DYNAMIC, 20, 5, ratio);
@@ -224,7 +303,8 @@ void renderUI() {
 
 					tinydir_file file;
 					tinydir_file_open(&file, "data/textures");
-					writeDirectoryList(file, loadSelectedTexture);
+					//writeDirectoryListRecursive(file, loadSelectedTexture);
+					writeDirectoryListIterative("data/textures", loadSelectedTexture);
 
 					nk_group_end(ctx);
 				}
@@ -246,7 +326,8 @@ void renderUI() {
 
 					tinydir_file file;
 					tinydir_file_open(&file, "data/audio");
-					writeDirectoryList(file, loadSelectedTrack);
+					//writeDirectoryListRecursive(file, loadSelectedTrack);
+					writeDirectoryListIterative("data/audio", loadSelectedTrack);
 
 					nk_layout_row_dynamic(ctx, 10, 0);
 					nk_layout_row_dynamic(ctx, 20, 2);
