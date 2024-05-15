@@ -136,6 +136,24 @@ void renderUI() {
 
 	if (hideUI) return;
 
+	if (saveVideo) {
+		if (nk_begin(ctx, "RECORDING", nk_rect(viewportWidth/2-200, viewportHeight/2-100, 400, 200),
+			NK_WINDOW_TITLE|NK_WINDOW_BORDER)) {
+
+			nk_layout_row_dynamic(ctx, 60, 1);
+			nk_layout_row_dynamic(ctx, 60, 1);
+			nk_labelf_colored(ctx, NK_TEXT_ALIGN_CENTERED, ((int)currentTime%2) ? nk_rgb(255,255,255) : nk_rgb(255,0,0), "RECORDING [%i/%i]", currentVideoFrame, maxVideoFrames);
+			float ratio[3] = {0.3333, 0.3333, 0.333};
+			nk_layout_row(ctx, NK_DYNAMIC, 20, 3, ratio);
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+			if (nk_button_label(ctx, "Stop")) {
+				currentVideoFrame = maxVideoFrames;
+			}
+			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
+		}
+		nk_end(ctx);
+	}
+
 	if (nk_begin(ctx, "CONFIG", nk_rect(viewportWidth-350-gap, gap, 350, 500),
 		NK_WINDOW_BORDER|NK_WINDOW_TITLE|NK_WINDOW_MINIMIZABLE|NK_WINDOW_NO_SCROLLBAR)) {
 
@@ -201,7 +219,7 @@ void renderUI() {
 						}
 						if (nk_tree_push(ctx, NK_TREE_NODE, "AUDIO", NK_MINIMIZED)) {
 							nk_layout_row_dynamic(ctx, 50, 1);
-							nk_label_wrap(ctx, "You can include an audio track that will be included in the rendered video sequence.");
+							nk_label_wrap(ctx, "You can add an audio track that will be included in the rendered video sequence.");
 							nk_layout_row_dynamic(ctx, 40, 1);
 							nk_label_wrap(ctx, "An audio file can be loaded in the [AUDIO] tab.");
 							nk_layout_row_dynamic(ctx, 50, 1);
