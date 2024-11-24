@@ -4,7 +4,7 @@ FFTW=`pkg-config --cflags --libs fftw3 fftw3f`
 LIBAV=`pkg-config --cflags --libs libavcodec libavutil libswscale libswresample libavformat`
 
 main:
-	gcc -w src/main.c -o bin/infra -lm $(SDL) $(GLEW) $(FFTW) $(LIBAV)
+	clang -w src/main.c -o bin/infra -lm $(SDL) $(GLEW) $(FFTW) $(LIBAV)
 	./bin/infra
 
 debug:
