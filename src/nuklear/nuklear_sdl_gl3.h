@@ -24,6 +24,7 @@ NK_API void                 nk_sdl_render(enum nk_anti_aliasing , int max_vertex
 NK_API void                 nk_sdl_shutdown(void);
 NK_API void                 nk_sdl_device_destroy(void);
 NK_API void                 nk_sdl_device_create(void);
+NK_API void                 nk_sdl_handle_grab(void);
 
 #endif
 
@@ -66,6 +67,7 @@ static struct nk_sdl {
     struct nk_sdl_device ogl;
     struct nk_context ctx;
     struct nk_font_atlas atlas;
+    Uint64 time_of_last_frame;
 } sdl;
 
 #ifdef __APPLE__
@@ -191,11 +193,16 @@ nk_sdl_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element_b
     int display_width, display_height;
     struct nk_vec2 scale;
     GLfloat ortho[4][4] = {
-        {2.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f,-2.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f,-1.0f, 0.0f},
-        {-1.0f,1.0f, 0.0f, 1.0f},
+        {  2.0f,  0.0f,  0.0f, 0.0f },
+        {  0.0f, -2.0f,  0.0f, 0.0f },
+        {  0.0f,  0.0f, -1.0f, 0.0f },
+        { -1.0f,  1.0f,  0.0f, 1.0f },
     };
+
+    Uint64 now = SDL_GetTicks();
+    sdl.ctx.delta_time_seconds = (float)(now - sdl.time_of_last_frame) / 1000;
+    sdl.time_of_last_frame = now;
+
     SDL_GetWindowSize(sdl.win, &width, &height);
     SDL_GL_GetDrawableSize(sdl.win, &display_width, &display_height);
     ortho[0][0] /= (GLfloat)width;
@@ -319,6 +326,7 @@ nk_sdl_init(SDL_Window *win)
     sdl.ctx.clip.paste = nk_sdl_clipboard_paste;
     sdl.ctx.clip.userdata = nk_handle_ptr(0);
     nk_sdl_device_create();
+    sdl.time_of_last_frame = SDL_GetTicks();
     return &sdl.ctx;
 }
 

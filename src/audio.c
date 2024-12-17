@@ -26,7 +26,7 @@ int freqToIndex(int f) {
 
 void updateFFT(float* inputBuffer) {
 	// Allocate variables
-	float currentLows = 0, currentMids = 0, currentHighs = 0;
+	float audioCurrent[8] = {0};
 	// Apply windowing
 	for (int i = 0; i < BUFFER_SIZE; i++) {
 		inputBuffer[i] *= hann[i];
@@ -36,25 +36,22 @@ void updateFFT(float* inputBuffer) {
 	fftwf_execute(plan);
 	fftwf_destroy_plan(plan);
 	// Obtain current visualization values
+	int splits[] = {freqToIndex(60), freqToIndex(250), freqToIndex(500),
+		freqToIndex(2000), freqToIndex(4000), freqToIndex(6000), freqToIndex(20000)};
+	int currentSplit = 0;
 	for (int i = freqToIndex(20); i < freqToIndex(20000); i++) {
 		double a = outputBuffer[i][0];
 		double b = outputBuffer[i][1];
 		float r = sqrt(a*a+b*b);
-		if (i < freqToIndex(250)) {
-			currentLows += r;
-		} else if (i < freqToIndex(2000)) {
-			currentMids += r;
-		} else {
-			currentHighs += r;
-		}
+		if (i > splits[currentSplit]) currentSplit++;
+		audioCurrent[currentSplit] += r;
+		audioCurrent[7] += r;
 	}
-	// Update max
-	maxLows = max(currentLows, maxLows);
-	maxMids = max(currentMids, maxMids);
-	maxHighs = max(currentHighs, maxHighs);
-	if (maxLows > 0) normalizedLows = currentLows/maxLows;
-	if (maxMids > 0) normalizedMids = currentMids/maxMids;
-	if (maxHighs > 0) normalizedHighs = currentHighs/maxHighs;
+	// Update values
+	for (int i = 0; i < 8; i++) {
+		audioMax[i] = max(audioMax[i]-drop, audioCurrent[i]);
+		if (audioMax[i] > 0) audioNormalized[i] = audioCurrent[i]/audioMax[i];
+	}
 }
 
 void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* callbackInput, ma_uint32 frameCount) {
@@ -66,7 +63,17 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 	(void)callbackInput;
 }
 
+void unloadTrack() {
+	if (trackLength == 0) return;
+	playing = 0;
+	ma_device_stop(&device);
+	ma_device_uninit(&device);
+	ma_decoder_uninit(&decoder);
+	SDL_FreeWAV(trackBuffer);
+}
+
 int loadTrack(char* path) {
+	unloadTrack();
 	// Load SDL track for rendering
 	if (SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength) == NULL) {
 		warning("Error loading audio file");
@@ -92,13 +99,6 @@ int loadTrack(char* path) {
 		return 0;
 	}
 	return 1;
-}
-
-void unloadTrack() {
-	if (trackLength == 0) return;
-	ma_device_uninit(&device);
-	ma_decoder_uninit(&decoder);
-	SDL_FreeWAV(trackBuffer);
 }
 
 void initAudio() {
@@ -136,31 +136,26 @@ void seekAudio() {
 }
 
 void renderAudio() {
-	if (trackLength == 0) return;
-	// Fill track buffer with current sound
-	int idx = currentTime*trackSampleRate-BUFFER_SIZE;
-	idx = clamp(0, (trackDuration*trackSampleRate)-BUFFER_SIZE, idx);
-	for (int i = 0; i < BUFFER_SIZE; i++) {
-		float v = 0;
-		for (int c = 0; c < trackChannels; c++) {
-			v = max(v, getTrackSample(idx+i, c));
+	if (lastRenderedTime != currentTime || saveFrame || saveVideo) {
+		if (trackLength == 0) return;
+		// Fill track buffer with current sound
+		int idx = currentTime*trackSampleRate-BUFFER_SIZE;
+		idx = clamp(0, (trackDuration*trackSampleRate)-BUFFER_SIZE, idx);
+		for (int i = 0; i < BUFFER_SIZE; i++) {
+			float v = 0;
+			for (int c = 0; c < trackChannels; c++) {
+				v = max(v, getTrackSample(idx+i, c));
+			}
+			audioBuffer[i] = v;
 		}
-		audioBuffer[i] = v;
+		// Update fft with new input buffer
+		updateFFT(audioBuffer);
+		float audioCurrent[8];
+		for (int i = 0; i < 8; i++) {
+			audioCurrent[i] = pow(audioNormalized[i], power);
+			audio[i] = lerp(audio[i], audioCurrent[i], 1-smoothness);
+			audioInc[i] += 0.1*audio[i];
+
+		}
 	}
-	// Update fft with new input buffer
-	updateFFT(audioBuffer);
-	float currentLows = pow(normalizedLows, power);
-	float currentMids = pow(normalizedMids, power);
-	float currentHighs = pow(normalizedHighs, power);
-	// Drop max values with clamping
-	maxLows = max(maxLows-deltaTime*drop, 0);
-	maxMids = max(maxMids-deltaTime*drop, 0);
-	maxHighs = max(maxHighs-deltaTime*drop, 0);
-	// Assign final smoothed values
-	lows = lerp(lows, currentLows, deltaTime*smoothness);
-	mids = lerp(mids, currentMids, deltaTime*smoothness);
-	highs = lerp(highs, currentHighs, deltaTime*smoothness);
-	lowsInc += 0.1*currentLows;
-	midsInc += 0.1*currentMids;
-	highsInc += 0.1*currentHighs;
 }

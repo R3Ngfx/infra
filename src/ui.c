@@ -9,6 +9,7 @@
 #define gap 20
 
 int currentTab = 0;
+int directoryListID = 0;
 char* names[] = {"INFO", "SHADER", "TEXTURE", "AUDIO", "RENDER"};
 
 // Loads selected track
@@ -38,7 +39,7 @@ void loadSelectedTexture(char* path) {
 // Write file load directory list recursively
 void writeDirectoryListRecursive(tinydir_file file, void (fileFunction)(char*)) {
 	if (file.is_dir) {
-		if (nk_tree_push(ctx, NK_TREE_TAB, file.name, NK_MAXIMIZED)) {
+		if (nk_tree_push_id(ctx, NK_TREE_TAB, file.name, directoryListID ? NK_MINIMIZED : NK_MAXIMIZED, directoryListID++)) {
 			tinydir_dir subDir;
 			tinydir_open_sorted(&subDir, file.path);
 			for (int i = 0; i < subDir.n_files; i++) {
@@ -58,44 +59,13 @@ void writeDirectoryListRecursive(tinydir_file file, void (fileFunction)(char*)) 
 			fileFunction(file.path);
 		}
 	}
-
 }
 
-void writeDirectoryListIterative(char* filepath, void (fileFunction)(char*)) {
-	tinydir_dir dirStack[512];
-	int readFileStack[512];
-	int currentRead = 0;
-	tinydir_open_sorted(&dirStack[currentRead], filepath);
-	readFileStack[currentRead] = 0;
-	if (!nk_tree_push(ctx, NK_TREE_TAB, dirStack[currentRead].path, NK_MAXIMIZED)) return;
-	int tot = 0;
-	while (currentRead >= 0) {
-readfile:
-		while (readFileStack[currentRead] < dirStack[currentRead].n_files) {
-			tinydir_file file;
-			tinydir_readfile_n(&dirStack[currentRead], &file, readFileStack[currentRead]);
-			readFileStack[currentRead]++;
-			if (file.is_dir) {
-				if (file.name[0] == '.') continue;
-				if (nk_tree_push(ctx, NK_TREE_TAB, file.name, NK_MINIMIZED)) {
-					currentRead++;
-					readFileStack[currentRead] = 0;
-					tinydir_open_sorted(&dirStack[currentRead], file.path);
-					goto readfile;
-				}
-			} else {
-				float ratio[2] = {0.7, 0.3};
-				nk_layout_row(ctx, NK_DYNAMIC, 20, 2, ratio);
-				nk_label(ctx, file.name, NK_TEXT_ALIGN_LEFT);
-				if (nk_button_label(ctx, "Load")) {
-					fileFunction(file.path);
-				}
-			}
-		}
-		tinydir_close(&dirStack[currentRead]);
-		nk_tree_pop(ctx);
-		currentRead--;
-	}
+void writeDirectoryList (char* path, void (fileFunction)(char*)) {
+	tinydir_file file;
+	tinydir_file_open(&file, path);
+	directoryListID = 0;
+	writeDirectoryListRecursive(file, fileFunction);
 }
 
 // Nuklear initialization
@@ -142,7 +112,7 @@ void renderUI() {
 
 			nk_layout_row_dynamic(ctx, 60, 1);
 			nk_layout_row_dynamic(ctx, 60, 1);
-			nk_labelf_colored(ctx, NK_TEXT_ALIGN_CENTERED, ((int)currentTime%2) ? nk_rgb(255,255,255) : nk_rgb(255,0,0), "RECORDING [%i/%i]", currentVideoFrame, maxVideoFrames);
+			nk_labelf(ctx, NK_TEXT_ALIGN_CENTERED, "RECORDING [%i/%i]", currentVideoFrame, maxVideoFrames);
 			float ratio[3] = {0.3333, 0.3333, 0.333};
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 3, ratio);
 			nk_label(ctx, "", NK_TEXT_ALIGN_LEFT);
@@ -258,10 +228,7 @@ void renderUI() {
 						reloadShaders = 1;
 					}
 
-					tinydir_file file;
-					tinydir_file_open(&file, "data/shaders");
-					//writeDirectoryListRecursive(file, loadSelectedShader);
-					writeDirectoryListIterative("data/shaders", loadSelectedShader);
+					writeDirectoryList("data/shaders", loadSelectedShader);
 
 					nk_group_end(ctx);
 				}
@@ -319,10 +286,7 @@ void renderUI() {
 						loadSelectedTexture(texturePath);
 					}
 
-					tinydir_file file;
-					tinydir_file_open(&file, "data/textures");
-					//writeDirectoryListRecursive(file, loadSelectedTexture);
-					writeDirectoryListIterative("data/textures", loadSelectedTexture);
+					writeDirectoryList("data/textures", loadSelectedTexture);
 
 					nk_group_end(ctx);
 				}
@@ -342,16 +306,13 @@ void renderUI() {
 						reloadTrack = 1;
 					}
 
-					tinydir_file file;
-					tinydir_file_open(&file, "data/audio");
-					//writeDirectoryListRecursive(file, loadSelectedTrack);
-					writeDirectoryListIterative("data/audio", loadSelectedTrack);
+					writeDirectoryList("data/audio", loadSelectedTrack);
 
 					nk_layout_row_dynamic(ctx, 10, 0);
 					nk_layout_row_dynamic(ctx, 20, 2);
 					nk_label(ctx, "VISUALIZATION:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Smoothness", 0, &smoothness, frameRate, 0.1, 0.1);
+					nk_property_float(ctx, "Smoothness", 0, &smoothness, 1, 0.1, 0.1);
 					nk_layout_row_dynamic(ctx, 30, 1);
 					nk_property_float(ctx, "Power", 0.01, &power, 20, 0.1, 0.1);
 					nk_layout_row_dynamic(ctx, 30, 1);

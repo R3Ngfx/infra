@@ -88,11 +88,11 @@ int16_t* trackBuffer;
 float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
-float lows = 0, mids = 0, highs = 0;
-float lowsInc = 0, midsInc = 0, highsInc = 0;
-float maxLows = eps, maxMids = eps, maxHighs = eps;
-float normalizedLows = 0, normalizedMids = 0, normalizedHighs = 0;
-float smoothness = 6, power = 1, drop = 0;
+float audio[8] = {0};
+float audioMax[8] = {eps, eps, eps, eps, eps, eps, eps, eps};
+float audioNormalized[8] = {0};
+float audioInc[8] = {0};
+float smoothness = 0.7, power = 1, drop = 0.01;
 
 // Error handling
 char warningCount = 0;
@@ -140,7 +140,6 @@ int16_t getTrackSample(int sample, int channel) {
 		error("Unrecognized audio format");
 		return 0;
 	}
-	//printf("Indexing at %i of %i\n", sample*trackChannels+channel, trackLength/trackChannels/(SDL_AUDIO_BITSIZE(spec.format)/8));
 	return trackBuffer[sample*trackChannels+channel];
 }
 

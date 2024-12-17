@@ -4,8 +4,8 @@
 
 #version 330 core
 uniform float time;
-uniform vec4 audio;
-uniform vec4 audioInc;
+uniform float audio[8];
+uniform float audioInc[8];
 uniform vec2 resolution;
 layout(location = 0) out vec4 outCol;
 
