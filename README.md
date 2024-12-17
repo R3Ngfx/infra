@@ -12,16 +12,16 @@ Check the *INFO* tab in the application for more details about its usage.
 Infra uses GLSL shaders. Five different variables are exposed and can be used in the shader:
 - `time` *(float)*: Current time in seconds.
 - `resolution` *(vec2)*: Horizontal and vertical resolution of the rendered image.
-- `audio` *(vec4)*: Value of audio visualization.
-    - `audio.x`: Low frequencies (20Hz-250Hz).
-    - `audio.y`: Mid frequencies (250Hz-2000Hz).
-    - `audio.z`: High frequencies (2000Hz-20000Hz).
-    - `audio.w`: All.
-- `audioInc` *(vec4)*: Incremental value of audio visualization.
-    - `audioInc.x`: Low frequencies (20Hz-250Hz).
-    - `audioInc.y`: Mid frequencies (250Hz-2000Hz).
-    - `audioInc.z`: High frequencies (2000Hz-20000Hz).
-    - `audioInc.w`: All.
+- `audio` *float[8]*: Values of audio visualization.
+    - `audio[0]`: Sub Bass (20Hz-60Hz).
+    - `audio[1]`: Bass (60Hz-250Hz).
+    - `audio[2]`: Low Midrange (250Hz-500Hz).
+    - `audio[3]`: Midrange (500Hz-2000Hz).
+    - `audio[4]`: Upper Midrange (2000Hz-4000Hz).
+    - `audio[5]`: Presence (4000Hz-6000Hz).
+    - `audio[6]`: Brilliance (6000Hz-20000Hz).
+    - `audio[7]`: All (20Hz-20000Hz).
+- `audioInc` *float[8]*: Incremental value of audio visualization. Indexed in the same way as with `audio`.
 - `tex<NUM>` *(sampler2D)*: Up to 16 texture images can be loaded, with `<NUM>` being the number of the image.
     - `tex0`: First image
     - `tex1`: Second image
