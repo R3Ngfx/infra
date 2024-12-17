@@ -1,7 +1,7 @@
 # Infra
 Infra is a tool for creating textures and videos by exporting the output of GLSL fragment shaders.
 
-![Infra](https://github.com/R3Ngfx/infra/assets/47367618/66c53c47-e40c-4610-9fc3-31a1d76e5db5)
+![infra](https://github.com/user-attachments/assets/4e79cac6-e28a-44e6-ac74-9739c6ce86e3)
 
 ## Usage
 With Infra you can load and visualize fragment shaders, adjust the export parameters and render video sequences or individual frames.
