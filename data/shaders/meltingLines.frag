@@ -1,3 +1,7 @@
+// Melting Lines
+// Author: Mateo Vallejo
+// License: CC BY-NC 4.0
+
 #version 330 core
 uniform float time;
 uniform vec4 audio;

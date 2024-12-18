@@ -18,6 +18,7 @@ fftwf_complex* outputBuffer;
 unsigned int audioBufferPos = 0;
 float audioBuffer[BUFFER_SIZE];
 float hann[BUFFER_SIZE];
+float blackmanHarris[BUFFER_SIZE];
 
 // Given a frequency in Hz return the index of its position in the FFT output array
 int freqToIndex(int f) {
@@ -29,7 +30,8 @@ void updateFFT(float* inputBuffer) {
 	float audioCurrent[8] = {0};
 	// Apply windowing
 	for (int i = 0; i < BUFFER_SIZE; i++) {
-		inputBuffer[i] *= hann[i];
+		//inputBuffer[i] *= hann[i];
+		inputBuffer[i] *= blackmanHarris[i];
 	}
 	// Calculate FFT
 	fftwf_plan plan = fftwf_plan_dft_r2c_1d(BUFFER_SIZE, inputBuffer, outputBuffer, FFTW_ESTIMATE);
@@ -49,7 +51,7 @@ void updateFFT(float* inputBuffer) {
 	}
 	// Update values
 	for (int i = 0; i < 8; i++) {
-		audioMax[i] = max(audioMax[i]-drop, audioCurrent[i]);
+		audioMax[i] = max(audioMax[i]*(1-0.01*drop), audioCurrent[i]);
 		if (audioMax[i] > 0) audioNormalized[i] = audioCurrent[i]/audioMax[i];
 	}
 }
@@ -103,9 +105,11 @@ int loadTrack(char* path) {
 
 void initAudio() {
 	// Precalculate Hann window
+	float N = BUFFER_SIZE;
 	for (int n = 0; n < BUFFER_SIZE; n++) {
-		float r = sin(3.14159265358979323846*n/(float)BUFFER_SIZE);
+		float r = sin(Pi*n/(float)N);
 		hann[n] = r*r;
+		blackmanHarris[n] = 0.35875 - 0.48829*cos(2*Pi*n/N) + 0.14128*cos(4*Pi*n/N) - 0.01168*cos(6*Pi*n/N);
 	}
 	outputBuffer = (fftwf_complex*)fftwf_malloc(sizeof(fftw_complex)*((FFT_SIZE)));
 }

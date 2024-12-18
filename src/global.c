@@ -28,7 +28,7 @@
 #define MAX_VERTEX_MEMORY 512 * 1024
 #define MAX_ELEMENT_MEMORY 128 * 1024
 
-//#define pi 3.14159265358979323846
+#define Pi 3.14159265358979323846
 #define eps 0.000001
 
 // Rendering variables
