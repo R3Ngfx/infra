@@ -11,7 +11,7 @@ ma_decoder decoder;
 ma_device_config deviceConfig;
 ma_device device;
 
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 8192
 #define FFT_SIZE BUFFER_SIZE/2
 
 fftwf_complex* outputBuffer;
@@ -100,6 +100,9 @@ int loadTrack(char* path) {
 		warning("Error initializing audio device");
 		return 0;
 	}
+	for (int i = 0; i < 8; i++) {
+		audioMax[i] = 0;
+	}
 	return 1;
 }
 
@@ -157,7 +160,7 @@ void renderAudio() {
 		float audioCurrent[8];
 		for (int i = 0; i < 8; i++) {
 			audioCurrent[i] = pow(audioNormalized[i], power);
-			audio[i] = lerp(audio[i], audioCurrent[i], 1-smoothness);
+			audio[i] = lerp(audioCurrent[i], audio[i], smoothness);
 			audioInc[i] += 0.1*audio[i];
 
 		}

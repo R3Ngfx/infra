@@ -46,7 +46,7 @@ External dependencies must be installed separately.
 - [SDL2](https://www.libsdl.org/) *(Zlib License)*
 - [FFTW](http://www.fftw.org/) *(GPLv2)*
 - [GLEW](https://github.com/nigels-com/glew) *(Modified BSD License)*
-- [LIBAV](https://libav.org/) *(GPLv2)*
+- [FFmpeg](https://www.ffmpeg.org/) *(GPLv2)*
 
 ## License
 Source code for Infra is provided under the [GNU General Public License Version 2](LICENSE).  

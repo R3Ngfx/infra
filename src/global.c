@@ -94,6 +94,11 @@ float audioNormalized[8] = {0};
 float audioInc[8] = {0};
 float smoothness = 0.7, power = 1, drop = 0.01;
 
+// Texture variables
+int currentFilter = 0;
+int textureFilters[2] = {GL_LINEAR, GL_NEAREST};
+
+
 // Error handling
 char warningCount = 0;
 char errorCount = 0;

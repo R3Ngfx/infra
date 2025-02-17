@@ -195,7 +195,7 @@ void renderUI() {
 							nk_layout_row_dynamic(ctx, 50, 1);
 							nk_label_wrap(ctx, "You can perform audio visualization effects in the shaders by reading the audio vec4 uniform.");
 							nk_layout_row_dynamic(ctx, 50, 1);
-							nk_label_wrap(ctx, "The behavior of the audio detection can be configured by modifying the smoothness, power and drop variables.");
+							nk_label_wrap(ctx, "The behavior of the audio detection can be configured by modifying the smoothness, power and decay variables.");
 							nk_tree_pop(ctx);
 						}
 						if (nk_tree_push(ctx, NK_TREE_NODE, "EXPORTING", NK_MINIMIZED)) {
@@ -240,12 +240,22 @@ void renderUI() {
 					nk_layout_row_dynamic(ctx, 20, 1);
 					nk_label(ctx, "LOADED:", NK_TEXT_LEFT);
 					for (int i = 0; i < loadedTextures; i++) {
-						float ratio[5] = {0.125, 0.65, 0.075, 0.075, 0.075};
-						nk_layout_row(ctx, NK_DYNAMIC, 20, 5, ratio);
+						float ratio[6] = {0.125, 0.6, 0.05, 0.075, 0.075, 0.075};
+						nk_layout_row(ctx, NK_DYNAMIC, 20, 6, ratio);
 						char texName[8];
 						sprintf(texName, "tex%i: ", i);
 						nk_label(ctx, texName, NK_TEXT_ALIGN_LEFT);
-						nk_label(ctx, texturePaths[i], NK_TEXT_ALIGN_RIGHT);
+						// Get name from filepath
+						int nameStart = 0;
+						int cc = 0;
+						while (texturePaths[i][cc] != '\0') {
+							if (texturePaths[i][cc] == '/' || texturePaths[i][cc] == '\\') {
+								nameStart = cc;
+							}
+							 cc++;
+						}
+						nk_label(ctx, &texturePaths[i][nameStart+1], NK_TEXT_ALIGN_RIGHT);
+						nk_label(ctx, "", NK_TEXT_ALIGN_RIGHT);
 						if (nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_UP)) {
 							if (i == 0) break;
 							char tempName[4096];
@@ -263,13 +273,18 @@ void renderUI() {
 							reloadTexture = 1;
 						}
 						if (nk_button_symbol(ctx, NK_SYMBOL_X)) {
-							loadedTextures--;
-							for (int i = 0; i < loadedTextures; i++) {
+							for (int j = i; j < loadedTextures-1; j++) {
 								sprintf(texturePaths[i], "%s", texturePaths[i+1]);
 							}
+							loadedTextures--;
 							reloadTexture = 1;
 						}
 					}
+					nk_layout_row_dynamic(ctx, 10, 1);
+					nk_layout_row_dynamic(ctx, 20, 1);
+					nk_label(ctx, "FILTER:", NK_TEXT_LEFT);
+					const char* filters[2] = {"LINEAR", "NEAREST"};
+					currentFilter = nk_combo(ctx, filters, NK_LEN(filters), currentFilter, 20, nk_vec2(200,200));
 
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_layout_row_dynamic(ctx, 20, 1);
@@ -295,6 +310,27 @@ void renderUI() {
 				nk_layout_row_dynamic(ctx, 400, 1);
 				if (nk_group_begin(ctx, "AUDIO", 0)) {
 
+					if (nk_tree_push(ctx, NK_TREE_TAB, "VISUALIZATION", NK_MAXIMIZED)) {
+						nk_layout_row_dynamic(ctx, 30, 1);
+						nk_property_float(ctx, "Smoothness", 0, &smoothness, 1, 0.1, 0.1);
+						nk_layout_row_dynamic(ctx, 30, 1);
+						nk_property_float(ctx, "Power", 0.01, &power, 20, 0.1, 0.1);
+						nk_layout_row_dynamic(ctx, 30, 1);
+						nk_property_float(ctx, "Decay", 0, &drop, 1, 0.1, 0.1);
+						nk_tree_pop(ctx);
+						nk_layout_row_dynamic(ctx, 80, 1);
+						if (nk_chart_begin(ctx, NK_CHART_COLUMN, 8, 0, 1)) {
+							for (int i = 0; i < 8; i++) {
+								if (nk_chart_push(ctx, audio[i]) & NK_CHART_HOVERING) {
+									char* freqNames[] = {"Sub-bass", "Bass", "Low midrange", "Midrange",
+										"Upper midrange", "Presence", "Brilliance", "All"};
+									nk_tooltipf(ctx, "audio[%i]: %s", i, freqNames[i]);
+								}
+							}
+							nk_chart_end(ctx);
+						}
+					}
+
 					float ratio[] = {0.8, 0.2f};
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "File Path:", NK_TEXT_ALIGN_LEFT);
@@ -308,15 +344,7 @@ void renderUI() {
 
 					writeDirectoryList("data/audio", loadSelectedTrack);
 
-					nk_layout_row_dynamic(ctx, 10, 0);
-					nk_layout_row_dynamic(ctx, 20, 2);
-					nk_label(ctx, "VISUALIZATION:", NK_TEXT_ALIGN_LEFT);
-					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Smoothness", 0, &smoothness, 1, 0.1, 0.1);
-					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Power", 0.01, &power, 20, 0.1, 0.1);
-					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Drop", 0, &drop, 1, 0.1, 0.1);
+
 					nk_group_end(ctx);
 				}
 				break;
@@ -395,6 +423,41 @@ void renderUI() {
 		nk_layout_row_end(ctx);
 	}
 	nk_end(ctx);
+	/*
+	if (nk_begin(ctx, "TIMELINE", nk_rect(viewportWidth-350-gap, viewportHeight-gap-65, 350, 65),
+		NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR)) {
+
+		float ratio[] = {0.333, 0.333, 0.333};
+		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratio);
+		nk_label(ctx, "TIMELINE", NK_TEXT_ALIGN_LEFT);
+		if (nk_button_label(ctx, "Save Frame")) {
+			framePath[framePathLen] = '\0';
+			saveFrame = 1;
+		}
+		if (nk_button_label(ctx, "Save Video")) {
+			videoPath[videoPathLen] = '\0';
+			startVideo = 1;
+		}
+		nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
+		nk_layout_row_push(ctx, 20);
+		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
+			if (!saveVideo){
+				playing = !playing;
+				changePauseAudio = 1;
+			}
+		}
+		nk_layout_row_push(ctx, 30);
+		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
+		nk_layout_row_push(ctx, 200);
+		nk_property_int(ctx, "TIME (%)", 0, &currentTimeSelected, 100, 1, 1);
+		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 100){
+			currentTime = renderVideoLength*currentTimeSelected/100.0f;
+			seekedTime = 1;
+		}
+		nk_layout_row_end(ctx);
+	}
+	nk_end(ctx);
+	*/
 
 	if (warningCount > 0) {
 		if (nk_begin(ctx, "WARNING", nk_rect(viewportWidth/2-200, viewportHeight/2-100, 400, 200),
