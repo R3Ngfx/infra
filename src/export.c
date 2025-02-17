@@ -313,7 +313,7 @@ void encodeVideoFrame() {
 		renderPixels = malloc(3*renderHeight*renderWidth*sizeof(unsigned char));
 		glReadPixels(0, 0, renderWidth, renderHeight, GL_RGB, GL_UNSIGNED_BYTE, renderPixels);
 		av_frame_make_writable(videoStream.frame);
-		int hr = sws_scale(swsContext, &renderPixels, rgbStride, 0, renderHeight,
+		int hr = sws_scale(swsContext, (const uint8_t * const*)(&renderPixels), rgbStride, 0, renderHeight,
 			videoStream.frame->data, videoStream.frame->linesize);
 		free(renderPixels);
 		videoStream.frame->pts = currentVideoFrame++;

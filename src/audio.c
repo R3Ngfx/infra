@@ -71,13 +71,13 @@ void unloadTrack() {
 	ma_device_stop(&device);
 	ma_device_uninit(&device);
 	ma_decoder_uninit(&decoder);
-	SDL_FreeWAV(trackBuffer);
+	SDL_FreeWAV((Uint8 *)trackBuffer);
 }
 
 int loadTrack(char* path) {
 	unloadTrack();
 	// Load SDL track for rendering
-	if (SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength) == NULL) {
+	if (SDL_LoadWAV(path, &spec, (Uint8 **)(&trackBuffer), &trackLength) == NULL) {
 		warning("Error loading audio file");
 		return 0;
 	}

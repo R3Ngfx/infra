@@ -14,5 +14,11 @@ debug:
 build:
 	gcc -w src/main.c -o bin/infra -lm $(SDL) $(GLEW) $(FFTW) $(LIBAV) -O3
 
+# MINGW64 DLL Build
+win:
+	mkdir -p bin out data/audio
+	gcc -O3 src/main.c -o bin/infra -DSDL_MAIN_HANDLED \
+	-lSDL2 -lglew32 -lopengl32 -lfftw3 -lfftw3f -llibavcodec -llibavutil -llibswscale -llibswresample -llibavformat
+
 run:
 	./bin/infra

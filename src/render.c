@@ -121,7 +121,7 @@ int setShaders() {
 	glAttachShader(shaderProgram, vertShader);
 	loadFragment();
 	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, &fragSource, NULL);
+	glShaderSource(fragShader, 1, (const char * const*)(&fragSource), NULL);
 	glCompileShader(fragShader);
 	if (!checkShader(fragShader)) return 0;
 	glAttachShader(shaderProgram, fragShader);

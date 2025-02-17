@@ -64,7 +64,7 @@ unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
 unsigned int currentAudioSample = 0;
 float renderVideoLength = 60;
 double lastRenderedTime = -1;
-unsigned long currentTimeSelected = 0, lastTimeSelected = 0;
+long long unsigned int currentTimeSelected = 0, lastTimeSelected = 0;
 
 // Directory variables
 tinydir_dir dataDir;
@@ -131,13 +131,15 @@ float clamp(float min, float max, float x) {
 	return (x < min ? min : (x > max ? max : x));
 }
 
-float min(float a, float b) {
-	return a < b ? a : b;
-}
+#if !defined(_WIN64)
+	float min(float a, float b) {
+		return a < b ? a : b;
+	}
 
-float max(float a, float b) {
-	return a > b ? a : b;
-}
+	float max(float a, float b) {
+		return a > b ? a : b;
+	}
+#endif
 
 int16_t getTrackSample(int sample, int channel) {
 	if (trackLength == 0) return 0;
