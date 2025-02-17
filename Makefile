@@ -17,8 +17,12 @@ build:
 # MINGW64 DLL Build
 win:
 	mkdir -p bin out data/audio
-	gcc -O3 src/main.c -o bin/infra -DSDL_MAIN_HANDLED \
+	gcc src/main.c -o bin/infra -DSDL_MAIN_HANDLED \
 	-lSDL2 -lglew32 -lopengl32 -lfftw3 -lfftw3f -llibavcodec -llibavutil -llibswscale -llibswresample -llibavformat
+	bash dll_utils/find.sh
+
+clean:
+	rm bin/*.dll bin/*.exe
 
 run:
 	./bin/infra
