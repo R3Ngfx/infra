@@ -2,6 +2,9 @@
 // Author: Mateo Vallejo
 // License: GNU General Public License (See LICENSE for full details)
 
+#ifndef ADUIO
+#define ADUIO
+
 #define MINIAUDIO_IMPLEMENTATION
 #include "global.c"
 #include "miniaudio/miniaudio.h"
@@ -14,34 +17,32 @@ ma_device device;
 #define BUFFER_SIZE 8192
 #define FFT_SIZE BUFFER_SIZE/2
 
+// Given a frequency in Hz return the index of its position in the FFT output array
+#define FREQ_TO_INDEX(f) ((int)(BUFFER_SIZE*f/(float)trackSampleRate))
+
 fftwf_complex* outputBuffer;
 unsigned int audioBufferPos = 0;
 float audioBuffer[BUFFER_SIZE];
 float hann[BUFFER_SIZE];
 float blackmanHarris[BUFFER_SIZE];
 
-// Given a frequency in Hz return the index of its position in the FFT output array
-int freqToIndex(int f) {
-	return (int)(BUFFER_SIZE*f/(float)outputSampleRate);
-}
-
-void updateFFT(float* inputBuffer) {
+void updateFFT() {
 	// Allocate variables
 	float audioCurrent[8] = {0};
 	// Apply windowing
 	for (int i = 0; i < BUFFER_SIZE; i++) {
-		//inputBuffer[i] *= hann[i];
-		inputBuffer[i] *= blackmanHarris[i];
+		audioBuffer[i] *= hann[i];
+		//audioBuffer[i] *= blackmanHarris[i];
 	}
 	// Calculate FFT
-	fftwf_plan plan = fftwf_plan_dft_r2c_1d(BUFFER_SIZE, inputBuffer, outputBuffer, FFTW_ESTIMATE);
+	fftwf_plan plan = fftwf_plan_dft_r2c_1d(BUFFER_SIZE, audioBuffer, outputBuffer, FFTW_ESTIMATE);
 	fftwf_execute(plan);
 	fftwf_destroy_plan(plan);
 	// Obtain current visualization values
-	int splits[] = {freqToIndex(60), freqToIndex(250), freqToIndex(500),
-		freqToIndex(2000), freqToIndex(4000), freqToIndex(6000), freqToIndex(20000)};
+	int splits[] = {FREQ_TO_INDEX(60), FREQ_TO_INDEX(250), FREQ_TO_INDEX(500),
+		FREQ_TO_INDEX(2000), FREQ_TO_INDEX(4000), FREQ_TO_INDEX(6000), FREQ_TO_INDEX(20000)};
 	int currentSplit = 0;
-	for (int i = freqToIndex(20); i < freqToIndex(20000); i++) {
+	for (int i = FREQ_TO_INDEX(20); i < FREQ_TO_INDEX(20000); i++) {
 		double a = outputBuffer[i][0];
 		double b = outputBuffer[i][1];
 		float r = sqrt(a*a+b*b);
@@ -65,19 +66,37 @@ void dataCallback(ma_device* callbackDevice, void* callbackOutput, const void* c
 	(void)callbackInput;
 }
 
+void playPauseAudio() {
+	if (trackLength == 0) return;
+	if (playing) {
+		if (ma_device_start(&device) != MA_SUCCESS) {
+			warning("Error starting audio device");
+			// TODO: Handle error
+		}
+	} else {
+		if (ma_device_stop(&device) != MA_SUCCESS) {
+			warning("Error stopping audio device");
+			// TODO: Handle error
+		}
+	}
+}
+
 void unloadTrack() {
 	if (trackLength == 0) return;
-	playing = 0;
+	if (playing) {
+		playing = 0;
+		playPauseAudio();
+	}
 	ma_device_stop(&device);
 	ma_device_uninit(&device);
 	ma_decoder_uninit(&decoder);
-	SDL_FreeWAV((Uint8 *)trackBuffer);
+	SDL_FreeWAV(trackBuffer);
 }
 
 int loadTrack(char* path) {
 	unloadTrack();
 	// Load SDL track for rendering
-	if (SDL_LoadWAV(path, &spec, (Uint8 **)(&trackBuffer), &trackLength) == NULL) {
+	if (SDL_LoadWAV(path, &spec, &trackBuffer, &trackLength) == NULL) {
 		warning("Error loading audio file");
 		return 0;
 	}
@@ -122,21 +141,6 @@ void uninitAudio() {
 	fftw_free(outputBuffer);
 }
 
-void playPauseAudio() {
-	if (trackLength == 0) return;
-	if (playing) {
-		if (ma_device_start(&device) != MA_SUCCESS) {
-			warning("Error starting audio device");
-			// TODO: Handle error
-		}
-	} else {
-		if (ma_device_stop(&device) != MA_SUCCESS) {
-			warning("Error stopping audio device");
-			// TODO: Handle error
-		}
-	}
-}
-
 void seekAudio() {
 	if (trackLength == 0) return;
 	ma_decoder_seek_to_pcm_frame(&decoder, currentTime*outputSampleRate);
@@ -151,12 +155,12 @@ void renderAudio() {
 		for (int i = 0; i < BUFFER_SIZE; i++) {
 			float v = 0;
 			for (int c = 0; c < trackChannels; c++) {
-				v = max(v, getTrackSample(idx+i, c));
+				v += getTrackSample(idx+i, c);
 			}
 			audioBuffer[i] = v;
 		}
 		// Update fft with new input buffer
-		updateFFT(audioBuffer);
+		updateFFT();
 		float audioCurrent[8];
 		for (int i = 0; i < 8; i++) {
 			audioCurrent[i] = pow(audioNormalized[i], power);
@@ -166,3 +170,4 @@ void renderAudio() {
 		}
 	}
 }
+#endif

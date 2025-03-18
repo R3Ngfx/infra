@@ -84,7 +84,7 @@ char trackPath[4096] = "";
 int trackPathLen = 0;
 SDL_AudioSpec spec;
 unsigned int trackLength = 0;
-int16_t* trackBuffer;
+Uint8* trackBuffer;
 float trackDuration = 0;
 unsigned int trackSampleRate = 48000;
 unsigned char trackChannels = 2;
@@ -97,7 +97,6 @@ float smoothness = 0.7, power = 1, drop = 0.01;
 // Texture variables
 int currentFilter = 0;
 int textureFilters[2] = {GL_LINEAR, GL_NEAREST};
-
 
 // Error handling
 char warningCount = 0;
@@ -147,7 +146,7 @@ int16_t getTrackSample(int sample, int channel) {
 		error("Unrecognized audio format");
 		return 0;
 	}
-	return trackBuffer[sample*trackChannels+channel];
+	return ((int16_t*)trackBuffer)[sample*trackChannels+channel];
 }
 
 #endif

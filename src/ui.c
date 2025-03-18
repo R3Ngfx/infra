@@ -361,7 +361,7 @@ void renderUI() {
 					nk_layout_row_dynamic(ctx, 10, 2);
 					nk_label(ctx, "Bitrate:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_int(ctx, "Bitrate(kb/s):", 1, &videoBitrate, 2147483647, 1, 1);
+					nk_property_int(ctx, "Bitrate (kb/s):", 1, &videoBitrate, 2147483647, 1, 1);
 
 					nk_layout_row_dynamic(ctx, 10, 2);
 					nk_label(ctx, "Framerate:", NK_TEXT_ALIGN_LEFT);
@@ -371,7 +371,7 @@ void renderUI() {
 					nk_layout_row_dynamic(ctx, 10, 2);
 					nk_label(ctx, "Length:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Seconds:", 0, &renderVideoLength, 3600, 1, 0.1);
+					nk_property_float(ctx, "Length (s):", startTime, &renderVideoLength, 3600, 1, 0.1);
 
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "Frame export path:", NK_TEXT_ALIGN_LEFT);
@@ -423,41 +423,6 @@ void renderUI() {
 		nk_layout_row_end(ctx);
 	}
 	nk_end(ctx);
-	/*
-	if (nk_begin(ctx, "TIMELINE", nk_rect(viewportWidth-350-gap, viewportHeight-gap-65, 350, 65),
-		NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR)) {
-
-		float ratio[] = {0.333, 0.333, 0.333};
-		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratio);
-		nk_label(ctx, "TIMELINE", NK_TEXT_ALIGN_LEFT);
-		if (nk_button_label(ctx, "Save Frame")) {
-			framePath[framePathLen] = '\0';
-			saveFrame = 1;
-		}
-		if (nk_button_label(ctx, "Save Video")) {
-			videoPath[videoPathLen] = '\0';
-			startVideo = 1;
-		}
-		nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
-		nk_layout_row_push(ctx, 20);
-		if (nk_button_symbol(ctx, playing ? NK_SYMBOL_RECT_SOLID : NK_SYMBOL_TRIANGLE_RIGHT)) {
-			if (!saveVideo){
-				playing = !playing;
-				changePauseAudio = 1;
-			}
-		}
-		nk_layout_row_push(ctx, 30);
-		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
-		nk_layout_row_push(ctx, 200);
-		nk_property_int(ctx, "TIME (%)", 0, &currentTimeSelected, 100, 1, 1);
-		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 100){
-			currentTime = renderVideoLength*currentTimeSelected/100.0f;
-			seekedTime = 1;
-		}
-		nk_layout_row_end(ctx);
-	}
-	nk_end(ctx);
-	*/
 
 	if (warningCount > 0) {
 		if (nk_begin(ctx, "WARNING", nk_rect(viewportWidth/2-200, viewportHeight/2-100, 400, 200),
