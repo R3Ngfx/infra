@@ -41,7 +41,7 @@ int main() {
 		// Frame time
 		if (saveVideo) {
 			currentFrameTime = (double)currentVideoFrame/frameRate;
-			currentTime = currentFrameTime;
+			currentTime = renderVideoStart+currentFrameTime;
 			deltaTime = 1.0f/frameRate;
 		} else {
 			prevFrameTime = currentFrameTime;
@@ -54,10 +54,10 @@ int main() {
 			}
 			if (playing) {
 				currentTime += deltaTime;
-				currentTimeSelected = (unsigned long)100*min((currentTime/renderVideoLength), 1);
-				lastTimeSelected = currentTimeSelected;
 			}
 		}
+		currentTimeSelected = (unsigned long)1000*clamp(0, 1, ((currentTime-renderVideoStart)/(renderVideoEnd-renderVideoStart)));
+		lastTimeSelected = currentTimeSelected;
 
 		// Handle input events
 		SDL_Event event;
@@ -114,10 +114,9 @@ int main() {
 				error("Error initializing libav\n");
 				return 1;
 			}
+			printf("Starting video with frame %i and audio sample %f\n", currentVideoFrame, renderVideoStart*trackSampleRate);
 			startVideo = 0;
 			saveVideo = 1;
-			currentVideoFrame = 0;
-			maxVideoFrames = renderVideoLength*frameRate;
 			SDL_GL_SetSwapInterval(0);
 		}
 		if (reloadShaders) {

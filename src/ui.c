@@ -369,9 +369,14 @@ void renderUI() {
 					nk_property_int(ctx, "FPS:", 1, &frameRate, 2147483647, 1, 1);
 
 					nk_layout_row_dynamic(ctx, 10, 2);
-					nk_label(ctx, "Length:", NK_TEXT_ALIGN_LEFT);
+					nk_label(ctx, "Start time:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Length (s):", 0, &renderVideoLength, 3600, 1, 0.1);
+					nk_property_float(ctx, "Start time (s):", 0, &renderVideoStart, renderVideoEnd, 1, 0.1);
+
+					nk_layout_row_dynamic(ctx, 10, 2);
+					nk_label(ctx, "End time:", NK_TEXT_ALIGN_LEFT);
+					nk_layout_row_dynamic(ctx, 30, 1);
+					nk_property_float(ctx, "End time (s):", renderVideoStart, &renderVideoEnd, 3600, 1, 0.1);
 
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "Frame export path:", NK_TEXT_ALIGN_LEFT);
@@ -415,9 +420,9 @@ void renderUI() {
 		nk_layout_row_push(ctx, 30);
 		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
 		nk_layout_row_push(ctx, viewportWidth-2*gap-50-20);
-		nk_progress(ctx, &currentTimeSelected, 100, NK_MODIFIABLE);
-		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 100){
-			currentTime = renderVideoLength*currentTimeSelected/100.0f;
+		nk_progress(ctx, &currentTimeSelected, 1000, NK_MODIFIABLE);
+		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 1000){
+			currentTime = renderVideoStart+(renderVideoEnd-renderVideoStart)*currentTimeSelected/1000.0f;
 			seekedTime = 1;
 		}
 		nk_layout_row_end(ctx);

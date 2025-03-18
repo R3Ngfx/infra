@@ -222,6 +222,12 @@ int initVideoExport() {
 		warning("Error writing header");
 		return 0;
 	}
+	// Set variables
+	currentVideoFrame = 0;
+	currentAudioSample = 0;//renderVideoStart*trackSampleRate*trackChannels;
+	maxVideoFrames = (renderVideoEnd-renderVideoStart)*frameRate;
+	videoStream.samples = 0;
+	audioStream.samples = 0;
 	return 1;
 }
 
@@ -327,7 +333,7 @@ void encodeVideoFrame() {
 		int16_t* data = (int16_t*)audioStream.tempFrame->data[0];
 		for (int j = 0; j < audioStream.tempFrame->nb_samples; j++) {
 			for (int i = 0; i < audioStream.codecContext->ch_layout.nb_channels; i++) {
-				int16_t v = getTrackSample(currentAudioSample, i);
+				int16_t v = getTrackSample(renderVideoStart*trackSampleRate+currentAudioSample, i);
 				data[j*audioStream.codecContext->ch_layout.nb_channels+i] = v;
 			}
 			currentAudioSample++;

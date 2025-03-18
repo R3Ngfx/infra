@@ -62,7 +62,7 @@ unsigned char useAudio = 0; // TODO: Implement
 double currentFrameTime = 0, prevFrameTime = 0, currentTime = 0, deltaTime;
 unsigned int currentVideoFrame = 0, maxVideoFrames = 3600;
 unsigned int currentAudioSample = 0;
-float renderVideoLength = 60;
+float renderVideoStart = 0, renderVideoEnd = 60;
 double lastRenderedTime = -1;
 long long unsigned int currentTimeSelected = 0, lastTimeSelected = 0;
 
