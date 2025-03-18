@@ -371,7 +371,7 @@ void renderUI() {
 					nk_layout_row_dynamic(ctx, 10, 2);
 					nk_label(ctx, "Length:", NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_dynamic(ctx, 30, 1);
-					nk_property_float(ctx, "Length (s):", startTime, &renderVideoLength, 3600, 1, 0.1);
+					nk_property_float(ctx, "Length (s):", 0, &renderVideoLength, 3600, 1, 0.1);
 
 					nk_layout_row_dynamic(ctx, 10, 1);
 					nk_label(ctx, "Frame export path:", NK_TEXT_ALIGN_LEFT);
