@@ -126,7 +126,7 @@ int loadTrack(char* path) {
 }
 
 void initAudio() {
-	// Precalculate Hann window
+	// Precalculate windowing functions
 	float N = BUFFER_SIZE;
 	for (int n = 0; n < BUFFER_SIZE; n++) {
 		float r = sin(Pi*n/(float)N);
@@ -164,7 +164,7 @@ void renderAudio() {
 		float audioCurrent[8];
 		for (int i = 0; i < 8; i++) {
 			audioCurrent[i] = pow(audioNormalized[i], power);
-			audio[i] = lerp(audioCurrent[i], audio[i], smoothness);
+			audio[i] = lerp(audio[i], audioCurrent[i], clamp(0, 1, (1-smoothness)*deltaTime*frameRate));
 			audioInc[i] += 0.1*audio[i];
 
 		}

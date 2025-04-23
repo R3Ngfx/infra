@@ -150,6 +150,8 @@ void renderUI() {
 						nk_layout_row_dynamic(ctx, 10, 1);
 						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Viewport Resolution: %ix%i", viewportWidth, viewportHeight);
 						nk_layout_row_dynamic(ctx, 10, 1);
+						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "Frame render time: %2.2fms", deltaTime*1000);
+						nk_layout_row_dynamic(ctx, 10, 1);
 						nk_labelf(ctx, NK_TEXT_ALIGN_LEFT, "FPS: %2.0f", 1.0/deltaTime);
 						nk_tree_pop(ctx);
 					}
@@ -171,7 +173,7 @@ void renderUI() {
 					if (nk_tree_push(ctx, NK_TREE_TAB, "HOW TO USE", NK_MAXIMIZED)) {
 						if (nk_tree_push(ctx, NK_TREE_NODE, "LOAD SHADERS", NK_MINIMIZED)) {
 							nk_layout_row_dynamic(ctx, 40, 1);
-							nk_label_wrap(ctx, "You can load the rendered shader in the [SHADER] tab.");
+							nk_label_wrap(ctx, "You can load the shader to be rendered in the [SHADER] tab.");
 							nk_layout_row_dynamic(ctx, 40, 1);
 							nk_label_wrap(ctx, "A list is shown of all of the files present in the data directory.");
 							nk_layout_row_dynamic(ctx, 50, 1);
@@ -182,9 +184,11 @@ void renderUI() {
 							nk_layout_row_dynamic(ctx, 40, 1);
 							nk_label_wrap(ctx, "Up to 16 textures can be loaded in the [TEXTURE] tab.");
 							nk_layout_row_dynamic(ctx, 50, 1);
-							nk_label_wrap(ctx, "The textures will be passed to the shader as Sampler2Ds with names from tex0 to tex15.");
+							nk_label_wrap(ctx, "The textures will be passed to the shader as Sampler2Ds with names from 'tex0' to 'tex15'.");
 							nk_layout_row_dynamic(ctx, 40, 1);
 							nk_label_wrap(ctx, "You can change the order of the loaded textures as well as unloading them.");
+							nk_layout_row_dynamic(ctx, 40, 1);
+							nk_label_wrap(ctx, "You can change the texture sampling filter to 'linear' (color interpolation) or 'nearest' (pixel perfect).");
 							nk_tree_pop(ctx);
 						}
 						if (nk_tree_push(ctx, NK_TREE_NODE, "AUDIO", NK_MINIMIZED)) {
@@ -193,7 +197,7 @@ void renderUI() {
 							nk_layout_row_dynamic(ctx, 40, 1);
 							nk_label_wrap(ctx, "An audio file can be loaded in the [AUDIO] tab.");
 							nk_layout_row_dynamic(ctx, 50, 1);
-							nk_label_wrap(ctx, "You can perform audio visualization effects in the shaders by reading the audio vec4 uniform.");
+							nk_label_wrap(ctx, "You can perform audio visualization effects in the shaders by reading the 'audio' float array uniform.");
 							nk_layout_row_dynamic(ctx, 50, 1);
 							nk_label_wrap(ctx, "The behavior of the audio detection can be configured by modifying the smoothness, power and decay variables.");
 							nk_tree_pop(ctx);
