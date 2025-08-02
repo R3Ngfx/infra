@@ -424,7 +424,7 @@ void renderUI() {
 		nk_layout_row_push(ctx, 30);
 		nk_labelf(ctx, NK_TEXT_LEFT, "%.2f", currentTime);
 		nk_layout_row_push(ctx, viewportWidth-2*gap-50-20);
-		nk_progress(ctx, &currentTimeSelected, 1000, NK_MODIFIABLE);
+		nk_progress(ctx, (nk_size*)&currentTimeSelected, 1000, NK_MODIFIABLE);
 		if (currentTimeSelected != lastTimeSelected && !saveVideo && currentTimeSelected != 1000){
 			currentTime = renderVideoStart+(renderVideoEnd-renderVideoStart)*currentTimeSelected/1000.0f;
 			seekedTime = 1;
